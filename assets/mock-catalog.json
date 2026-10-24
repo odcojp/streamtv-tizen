@@ -1,0 +1,123 @@
+{
+  "channels": [
+    {
+      "id": "mock-world",
+      "name": "World Today",
+      "categoryId": "mock-news",
+      "url": "https://raw.githubusercontent.com/mediaelement/mediaelement-files/master/big_buck_bunny.mp4"
+    },
+    {
+      "id": "mock-earth",
+      "name": "Wild Earth",
+      "categoryId": "mock-nature"
+    },
+    {
+      "id": "mock-culture",
+      "name": "The Culture Room",
+      "categoryId": "mock-culture-group"
+    },
+    {
+      "id": "mock-sports",
+      "name": "Mock Sports Preview",
+      "categoryId": "mock-sport-group",
+      "sports": true
+    }
+  ],
+  "movies": [
+    {
+      "id": "mock-film-one",
+      "name": "Mock Film: Open Horizons",
+      "categoryId": "mock-documentary",
+      "description": "Mock movie metadata. No movie stream has been supplied."
+    },
+    {
+      "id": "mock-film-two",
+      "name": "Mock Film: The Long Weekend",
+      "categoryId": "mock-drama",
+      "description": "Mock movie metadata. No movie stream has been supplied."
+    }
+  ],
+  "series": [
+    {
+      "id": "mock-series-one",
+      "name": "Mock Show: Field Notes",
+      "categoryId": "mock-series-documentary",
+      "episodes": [
+        {
+          "id": "mock-episode-one",
+          "name": "Mock Episode: First Light",
+          "season": 1,
+          "episode": 1,
+          "description": "Mock episode metadata. No episode stream has been supplied."
+        }
+      ]
+    },
+    {
+      "id": "mock-series-two",
+      "name": "Mock Show: City Stories",
+      "categoryId": "mock-series-drama"
+    }
+  ],
+  "categories": [
+    {
+      "id": "mock-news",
+      "name": "News",
+      "type": "channel"
+    },
+    {
+      "id": "mock-nature",
+      "name": "Nature",
+      "type": "channel"
+    },
+    {
+      "id": "mock-culture-group",
+      "name": "Culture",
+      "type": "channel"
+    },
+    {
+      "id": "mock-sport-group",
+      "name": "Sports",
+      "type": "channel"
+    },
+    {
+      "id": "mock-documentary",
+      "name": "Documentary",
+      "type": "movie"
+    },
+    {
+      "id": "mock-drama",
+      "name": "Drama",
+      "type": "movie"
+    },
+    {
+      "id": "mock-series-documentary",
+      "name": "Documentary",
+      "type": "series"
+    },
+    {
+      "id": "mock-series-drama",
+      "name": "Drama",
+      "type": "series"
+    }
+  ],
+  "epg": {
+    "programmes": [
+      {
+        "id": "mock-programme-one",
+        "channelId": "mock-world",
+        "title": "Mock Bulletin",
+        "start": "2026-10-23T12:00:00Z",
+        "end": "2026-10-23T12:30:00Z",
+        "description": "Illustrative schedule, not a real broadcast listing."
+      },
+      {
+        "id": "mock-programme-two",
+        "channelId": "mock-sports",
+        "title": "Mock Sports Roundup",
+        "start": "2026-10-23T13:00:00Z",
+        "end": "2026-10-23T14:00:00Z",
+        "description": "Illustrative schedule, not a real broadcast listing."
+      }
+    ]
+  }
+}

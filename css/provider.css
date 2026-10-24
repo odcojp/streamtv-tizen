@@ -1,0 +1,11 @@
+/* Connection settings reuse the current dialog palette, spacing and focus ring. */
+#provider-dialog{position:absolute;inset:0;z-index:20;background:#090e17ee;display:grid;place-items:center}
+#provider-dialog[hidden]{display:none}
+#provider-dialog form{width:1250px;background:#172638;padding:48px 55px;border-radius:24px}
+#provider-dialog h2{font-size:42px;margin:0 0 20px}
+#provider-dialog p,#provider-dialog label{font-size:24px;color:#c2d1df;line-height:1.5}
+#provider-dialog input{display:block;width:100%;font-size:30px;padding:16px;margin:10px 0 22px;color:white;background:#0b1520;border:2px solid #748b9c;border-radius:10px}
+#provider-dialog input:focus{outline:5px solid #83f4d2;outline-offset:5px}
+#provider-dialog button{padding:14px 22px;background:#25483f;color:white;border:1px solid #52796d;border-radius:10px;font-size:23px;margin-right:20px}
+#provider-dialog button:disabled{opacity:.35}
+#provider-message{min-height:100px;overflow-wrap:anywhere;margin-bottom:0}

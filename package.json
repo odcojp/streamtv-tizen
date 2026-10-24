@@ -1,0 +1,15 @@
+{
+  "name": "streamtv-tizen",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "python3 -m http.server 8080 --bind 0.0.0.0",
+    "check": "node --check js/api/catalog-store.js && node --check js/api/catalog-views.js && node --check js/api/catalog.js && node --check js/api/demo-catalog.js && node --check js/api/laon.js && node --check js/api/playlist.js && node --check js/api/provider-errors.js && node --check js/api/provider-response.js && node --check js/api/provider.js && node --check js/app.js && node --check js/player/avplay.js && node --check js/player/controller.js && node --check js/ui/catalog.js && node --check js/ui/library.js && node --check js/ui/playlist.js && node --check js/ui/provider-settings.js && node --check js/ui/remote.js && node --check js/ui/settings.js && node --check js/player/mock-avplay.js",
+    "test": "node --test tests/*.test.js",
+    "test:browser": "node tests/browser.cjs"
+  },
+  "type": "module",
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

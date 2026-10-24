@@ -1,0 +1,15 @@
+/* Reuse the existing sidebar, hero, channel cards and focus treatment. */
+.catalog-screens nav{margin-top:28px;gap:8px}
+.catalog-screens nav button{padding:13px 22px;font-size:24px}
+.catalog-screens aside small{margin-top:28px}
+.catalog-screens .section-title{gap:20px;min-height:48px}
+.catalog-screens .section-title h2{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.catalog-screens #playlist-group{width:270px;max-width:270px;font-size:21px;background:#172638;color:white;padding:11px;border:1px solid #748b9c;border-radius:10px}
+.catalog-screens #playlist-group:focus{outline:5px solid #83f4d2;outline-offset:5px}
+.catalog-card{position:relative;min-width:0}
+.catalog-card .channel{width:100%}
+.favorite-button{position:absolute;top:14px;right:14px;font-size:17px;background:#25483f;color:white;border:1px solid #52796d;border-radius:10px;padding:9px 12px}
+.favorite-button[aria-pressed="true"]{color:#80efcb}
+.catalog-state{grid-column:1/-1;min-height:235px;background:#172231;border:1px solid #314052;border-radius:20px;padding:32px;font-size:26px;color:#c2d1df}
+.catalog-state button,.catalog-back{padding:13px 20px;background:#25483f;color:white;border:1px solid #52796d;border-radius:10px;font-size:23px}
+.catalog-back[hidden]{display:none}
