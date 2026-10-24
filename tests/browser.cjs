@@ -19,7 +19,7 @@ before(async () => {
       const filename = path.resolve(root, '.' + (pathname === '/' ? '/index.html' : pathname));
       if (!filename.startsWith(root + path.sep)) { response.writeHead(403).end(); return; }
       const body = await fs.readFile(filename);
-      const type = {'.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css'}[path.extname(filename)] || 'application/octet-stream';
+      const type = {'.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.json': 'application/json'}[path.extname(filename)] || 'application/octet-stream';
       response.writeHead(200, {'Content-Type': type}); response.end(body);
     } catch (_) { response.writeHead(404).end(); }
   });
@@ -49,6 +49,7 @@ async function newPage(t, init, setup) {
   await page.goto(origin);
   await page.getByRole('button', {name: 'Import playlist', exact: true}).waitFor();
   await page.locator('#channels[aria-busy="false"]').waitFor();
+  await page.getByRole('button', {name: 'Live TV', exact: true}).click();
   await page.route('https://example.org/list.m3u', route => route.fulfill({
     status: 200, contentType: 'text/plain', headers: {'access-control-allow-origin': '*'}, body: playlist
   }));
@@ -61,10 +62,10 @@ async function importList(page, url = 'https://example.org/list.m3u', remember =
   await page.getByRole('button', {name: 'Load channels', exact: true}).click();
 }
 
-test('home retains branding and card design with screen/category and remote OK/Back navigation', async t => {
+test('light TizenShow retains screen/category and remote OK/Back navigation', async t => {
   const page = await newPage(t);
-  assert.equal(await page.title(), 'StreamTV');
-  assert.equal(await page.locator('header strong').textContent(), 'STREAMTV');
+  assert.equal(await page.title(), 'TizenShow');
+  assert.equal(await page.locator('header strong').textContent(), 'TizenShow');
   assert.equal(await page.locator('.channel').count(), 3);
   assert.equal(await page.locator('#count').textContent(), '4 items');
   for (const name of ['Live TV','Movies','TV Shows','Sports','TV Guide','My List','Recent'])
@@ -196,7 +197,7 @@ test('custom provider settings use separate fields, encoded credentials and exis
   assert.equal(await page.locator('#provider-dialog').isHidden(), true);
   assert.equal(await page.locator('.channel strong').first().textContent(), 'World Today');
   assert.equal(await page.locator('#count').textContent(), '4 items');
-  assert.equal(await page.locator('header strong').textContent(), 'STREAMTV');
+  assert.equal(await page.locator('header strong').textContent(), 'TizenShow');
 });
 
 test('provider authentication errors are safe, retryable and clear the password', async t => {
@@ -398,4 +399,58 @@ test('Samsung-style arrows/OK reach screens, primary cards, favorites and the ac
   assert.equal(await page.getByRole('button', {name: 'Remove Mock Film: Open Horizons from My List', exact: true}).getAttribute('aria-pressed'), 'true');
   await page.locator('.channel').first().focus(); await page.keyboard.press('ArrowLeft');
   assert.equal(await page.getByRole('button', {name: 'Movies', exact: true}).evaluate(element => element === document.activeElement), true);
+});
+
+
+test('TizenShow Home follows the light reference and exposes exactly ten remote sidebar destinations', async t => {
+  const page = await newPage(t);
+  await page.getByRole('button', {name: 'Home', exact: true}).click();
+  const labels = await page.locator('nav button').allTextContents();
+  assert.deepEqual(labels, ['Home','Live TV','Movies','TV Shows','Sports','TV Guide','My List','Recent','Search','Settings']);
+  assert.equal(await page.locator('.hero').isVisible(), true);
+  assert.equal(await page.locator('.home-row').count(), 3);
+  assert.equal(await page.locator('.home-row').nth(0).locator('.catalog-card').count(), 2);
+  assert.equal(await page.locator('.home-row').nth(1).locator('.catalog-card').count(), 2);
+  assert.equal(await page.locator('.home-row').nth(2).locator('.catalog-card').count(), 4);
+  assert.equal(await page.locator('body').evaluate(element => getComputedStyle(element).backgroundColor), 'rgb(244, 246, 250)');
+  assert.equal(await page.locator('header .brand img').evaluate(image => image.complete && image.naturalWidth > 0), true);
+  const poster = await page.locator('.home-row').first().locator('.channel').first().boundingBox();
+  assert.ok(poster.height > poster.width);
+  const rail = await page.locator('aside').boundingBox();
+  const last = await page.getByRole('button', {name: 'Settings', exact: true}).boundingBox();
+  assert.ok(last.y + last.height <= 1080 && rail.x === 0);
+  const lastCard = await page.locator('.live-strip .channel').last().boundingBox();
+  assert.ok(lastCard.y + lastCard.height <= 1062, 'all Home rows fit in the logical TV viewport');
+  await page.getByRole('button', {name: 'Home', exact: true}).focus();
+  await page.keyboard.press('ArrowRight');
+  assert.equal(await page.locator('#hero-play').evaluate(element => element === document.activeElement), true);
+  await page.getByRole('button', {name: 'Home', exact: true}).focus();
+  await page.screenshot({path: '/tmp/tizenshow-home-light.png'});
+  await page.getByRole('button', {name: 'See all Movies', exact: true}).click();
+  assert.equal(await page.locator('.section-title h2').textContent(), 'Movies');
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#stage').getAttribute('data-screen'), 'home');
+});
+
+test('Search filters supplied metadata without leaving text editing and Settings opens existing connection flows', async t => {
+  const page = await newPage(t);
+  await page.getByRole('button', {name: 'Search', exact: true}).focus();
+  await page.keyboard.press('Enter'); await page.keyboard.press('ArrowRight');
+  assert.equal(await page.locator('#catalog-search').evaluate(element => element === document.activeElement), true);
+  await page.locator('#catalog-search').fill('Field Notes');
+  assert.equal(await page.locator('.channel').count(), 1);
+  assert.match(await page.locator('.channel').textContent(), /Field Notes/);
+  await page.keyboard.press('ArrowLeft');
+  assert.equal(await page.locator('#catalog-search').evaluate(element => element === document.activeElement), true);
+  await page.keyboard.press('ArrowDown'); await page.keyboard.press('Enter');
+  assert.match(await page.locator('.channel').textContent(), /First Light/);
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#count').textContent(), '1 item');
+  await page.locator('#catalog-search').fill('no matching supplied record');
+  await page.getByRole('status').filter({hasText: 'No items match your search'}).waitFor();
+  await page.getByRole('button', {name: 'Settings', exact: true}).click();
+  await page.getByRole('button', {name: 'Manage playlist and provider', exact: true}).click();
+  assert.equal(await page.locator('#playlist-dialog').isVisible(), true);
+  await page.keyboard.press('Escape');
+  assert.equal(await page.getByRole('button', {name: 'Manage playlist and provider', exact: true}).evaluate(element => element === document.activeElement), true);
 });

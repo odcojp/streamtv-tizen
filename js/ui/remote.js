@@ -43,6 +43,14 @@ export function createRemoteNavigation({document, player, playlist, connection, 
     if (back) {
       if (player.isOpen()) { event.preventDefault(); player.close(); }
       else if (catalog.goBack?.()) event.preventDefault();
+      else if (document.getElementById('stage').dataset.screen !== 'home') {
+        event.preventDefault(); catalog.showScreen('home'); document.querySelector('nav button.active').focus();
+      }
+      return;
+    }
+    if (document.activeElement.id === 'catalog-search') {
+      if (key === 'ArrowDown') { event.preventDefault(); (document.querySelector('#channels .channel') || document.querySelector('#channels button'))?.focus(); }
+      else if (key === 'ArrowUp') { event.preventDefault(); document.querySelector('nav button.active')?.focus(); }
       return;
     }
     if (document.activeElement.tagName === 'SELECT') {
@@ -56,13 +64,13 @@ export function createRemoteNavigation({document, player, playlist, connection, 
     if (!DIRECTIONS[key]) return;
     event.preventDefault();
     if (!player.isOpen() && key === 'ArrowRight' && document.activeElement.closest('nav')) {
-      (document.querySelector('#channels .channel') || document.querySelector('#channels button') || importButton).focus();
+      (document.getElementById('stage').dataset.screen === 'home' ? document.querySelector('#hero-play:not(:disabled)') || document.getElementById('hero-info') : document.getElementById('stage').dataset.screen === 'search' ? document.getElementById('catalog-search') : document.querySelector('#channels .channel') || document.querySelector('#channels button') || importButton).focus();
       return;
     }
     if (!player.isOpen() && key === 'ArrowLeft' && document.activeElement === document.querySelector('#channels .channel')) {
       (document.querySelector('nav button.active') || importButton).focus(); return;
     }
-    const selector = 'button,select';
+    const selector = 'button,select,input';
     const candidates = [...document.querySelectorAll(selector)].filter(button =>
       button !== document.activeElement && !button.disabled && button.getClientRects().length &&
       (!player.isOpen() || document.getElementById('player').contains(button))

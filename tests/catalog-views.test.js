@@ -1,3 +1,4 @@
+import {searchCatalog} from '../js/api/catalog-views.js';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {mapCatalog, selectCatalogView, filterByCategory, itemReference} from '../js/api/catalog-views.js';
@@ -68,4 +69,17 @@ test('mapping does not mutate input or fill in missing category/name/URL metadat
   assert.deepEqual(mapped.items[0].record, {id: 'one'});
   assert.equal(mapped.items[0].name, 'Untitled item');
   assert.throws(() => mapCatalog({movies: {}}), /invalid/);
+});
+
+
+test('search matches only supplied metadata and keeps empty searches empty', () => {
+  const mapped = mapCatalog({channels: [{id:'one', name:'Public Sample', category:'Nature'}],
+    movies:[{id:'two', name:'Mock film', description:'Quiet rivers'}],
+    series:[{id:'three',name:'Field Notes',episodes:[{name:'First Light'}]}]});
+  assert.deepEqual(searchCatalog(mapped, ''), []);
+  assert.deepEqual(searchCatalog(mapped, '  NATURE  ').map(item => item.name), ['Public Sample']);
+  assert.deepEqual(searchCatalog(mapped, 'rivers').map(item => item.name), ['Mock film']);
+  assert.deepEqual(searchCatalog(mapped, 'first light').map(item => item.kind), ['episode']);
+  assert.deepEqual(searchCatalog(mapped, 'invented title'), []);
+  assert.equal(mapped.items[1].record.url, undefined);
 });

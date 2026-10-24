@@ -6,5 +6,9 @@ provider response. Movie and episode records intentionally have no stream URLs.
 The existing public sample MP4 is reused for the demo World Today channel.
 Do not put private playlists, credentials or signing files here.
 
-StreamTV branding is still rendered by index.html and css/style.css. There are
-no image/font files to migrate. Future local images, icons and fonts belong here.
+`branding/ribbon-t.svg` is a vector rendition of the supplied TizenShow logo
+reference, not an original editable brand export. `hero-landscape.svg` is original
+neutral placeholder scenery. No commercial posters or hero images from the
+reference screenshot are bundled. Cards display supplied poster/logo URLs when
+available and retain neutral placeholders if artwork is absent or fails.
+No external fonts are required.

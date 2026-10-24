@@ -1,4 +1,20 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=1920"><title>StreamTV</title><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/playlist.css"><link rel="stylesheet" href="css/provider.css"><link rel="stylesheet" href="css/catalog.css"></head>
-<body><main id="stage"><header><strong>STREAM<span>TV</span></strong><span>YOUR LIVING ROOM, CONNECTED</span><time id="clock"></time></header><div class="layout"><aside><h1>Good evening.</h1><p>Find something worth watching.</p><nav aria-label="Categories"><button data-category="All" class="active">All channels</button><button data-category="News">News</button><button data-category="Nature">Nature</button><button data-category="Culture">Culture</button></nav><small>DEMO COLLECTION<br>No subscription required to explore</small></aside><section><div class="hero"><div><p class="eyebrow">MADE FOR THE BIG SCREEN</p><h2>Your next favorite<br>starts here.</h2><p>Explore the demo collection with your remote.<br>Add your own streams when you’re ready.</p></div><div class="orb">▶</div></div><div class="section-title"><h2>Explore channels</h2><span id="count"></span></div><div id="channels" class="channels"></div><footer>↑ ↓ ← → Navigate &nbsp; · &nbsp; OK Select &nbsp; · &nbsp; Back Close player</footer></section></div><div id="player" role="dialog" aria-label="Channel player" hidden><object id="av-player" type="application/avplayer"></object><video id="video" controls></video><div class="player-ui"><button id="close">← Back to channels</button><h2 id="playing-title"></h2><p id="buffering" role="status" hidden>Buffering…</p>
-<p id="status" role="status"></p></div></div></main><script src="$WEBAPIS/webapis/webapis.js"></script><script type="module" src="js/app.js"></script></body></html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=1920">
+<title>TizenShow</title>
+<link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/playlist.css"><link rel="stylesheet" href="css/provider.css"><link rel="stylesheet" href="css/catalog.css"><link rel="stylesheet" href="css/tizenshow.css">
+</head>
+<body><main id="stage">
+<header><div class="brand"><img src="assets/branding/ribbon-t.svg" alt="" width="54" height="54"><strong>Tizen<span>Show</span></strong></div><div class="header-actions"><button id="open-search" aria-label="Open search" title="Search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="m15 15 6 6"/></svg></button><span id="connection-action"></span><button id="open-settings" aria-label="Open settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 3 1-2h4l1 2 3 2 3 1v4l-2 2-1 3 1 3-3 2-3-1-3 1-3-2 1-3-2-3-2-2V6l3-1Z"/><circle cx="12" cy="12" r="4"/></svg></button><time id="clock"></time></div></header>
+<div class="layout"><aside><nav aria-label="Library screens"></nav><small>MOCK CATALOG<br>No provider feed active</small></aside>
+<section id="content-area" aria-label="Content">
+<div class="hero"><div class="hero-copy"><p class="eyebrow">YOUR NEXT DISCOVERY</p><h1 id="hero-title">Welcome to TizenShow</h1><p id="hero-meta">Your collection, on the big screen.</p><p id="hero-description">Explore your catalog with your remote.</p><div class="hero-actions"><button id="hero-play" disabled>▶︎ Watch Now</button><button id="hero-info">More Info</button></div></div><span class="hero-demo">Mock catalog · Public sample</span></div>
+<div class="section-title"><h2>Home</h2><span id="count"></span></div>
+<div id="search-tools" hidden><label for="catalog-search">Search your catalog</label><input id="catalog-search" type="search" maxlength="128" autocomplete="off" placeholder="Titles, categories and descriptions"><p>Searches only the supplied catalog on this TV.</p></div>
+<div id="channels" class="channels"></div>
+<footer>↑ ↓ ← → Navigate &nbsp; · &nbsp; OK Select &nbsp; · &nbsp; Back Return</footer>
+</section></div>
+<div id="player" role="dialog" aria-label="Channel player" hidden><object id="av-player" type="application/avplayer"></object><video id="video" controls></video><div class="player-ui"><button id="close">← Back to channels</button><h2 id="playing-title"></h2><p id="buffering" role="status" hidden>Buffering…</p><p id="status" role="status"></p></div></div>
+</main><script src="$WEBAPIS/webapis/webapis.js"></script><script type="module" src="js/app.js"></script></body>
+</html>

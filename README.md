@@ -1,11 +1,11 @@
-# StreamTV
+# TizenShow
 
 Samsung TV web application for the user-specified Samsung M80H (2026),
 UN65M80HAFXZA. The earlier Device Manager screenshot reported `tv-10.0`;
 the supplied model group `26TV_PREMIUM2` and exact SDK release requirement
-still need independent confirmation. TizenShow is the finalized visual direction;
-the current source still renders the earlier StreamTV demo. Future UI work must
-follow [VISUAL-DIRECTION.md](VISUAL-DIRECTION.md) without incidental redesigns.
+still need independent confirmation. The light TizenShow interface follows the supplied visual reference and
+[VISUAL-DIRECTION.md](VISUAL-DIRECTION.md). It includes the ribbon-T brand, fixed
+ten-destination sidebar, cinematic hero, vertical poster rows and blue focus highlights.
 The logical layout remains 1920×1080 and scales to the display.
 
 **Current catalog source: clearly labeled mock data only.** The seven catalog
@@ -15,13 +15,14 @@ the real response schema has been safely verified and explicitly integrated.
 ## Project layout
 
 ```text
-index.html                    Existing markup, branding and module entry point
+index.html                    TizenShow shell, hero, sidebar and module entry point
 config.xml                    Existing widget identity, privileges and access policy
 css/
   style.css                   Original interface and AVPlay overlay styles
   playlist.css                Original importer and paging styles
   provider.css                Connection dialog in the existing visual style
-  catalog.css                 Seven-screen/sidebar/card additions
+  catalog.css                 Catalog state/card behavior styles
+  tizenshow.css               Approved light theme and TV layout
 js/
   app.js                      Composition, viewport scaling and clock
   api/
@@ -46,6 +47,8 @@ js/
     settings.js               Opt-in device-local playlist-address storage
 assets/
   mock-catalog.json           Explicit mock channel/VOD/category/EPG metadata
+  branding/ribbon-t.svg       Vector rendition of the supplied logo reference
+  hero-landscape.svg          Original neutral hero placeholder
   README.md                   Asset and fixture notes
 tests/                        Unit tests and browser integration tests
 package.json                  Development commands; ES module configuration
@@ -238,12 +241,13 @@ actual provider schema and physical-TV behavior remain unverified.
 
 ## Catalog screens and activity
 
-The existing StreamTV branding, gradient hero, typography, colors, channel-card
-layout and focus treatment remain. The sidebar now contains the requested Live
-TV, Movies, TV Shows, Sports, TV Guide, My List and Recent screens. A compact
-sidebar rule fits all seven screens and Import playlist in the same 1920×1080
-layout. New behavior is scoped in css/catalog.css; base style.css, playlist.css
-and config.xml were not changed.
+The TizenShow light theme uses the exact requested sidebar order: Home, Live TV,
+Movies, TV Shows, Sports, TV Guide, My List, Recent, Search and Settings. There is
+one Sports destination. The supplied screenshot governs layout and branding; its
+commercial titles and posters are not treated as catalog data. css/tizenshow.css
+scopes the visual update while config.xml and the existing playback/provider
+modules retain their behavior. Import playlist remains accessible from the
+header connection icon and Settings.
 
 | Screen | Normalized catalog mapping |
 | --- | --- |
@@ -315,3 +319,33 @@ Playback uses the existing Samsung runtime script and a session-guarded AVPlay a
 ## Compatibility audit and packaging handoff
 
 See [SAMSUNG-COMPATIBILITY-AUDIT.md](SAMSUNG-COMPATIBILITY-AUDIT.md) for target evidence, manifest/API/remote findings, test results and unresolved hardware checks. See [WINDOWS-TIZEN-BUILD.md](WINDOWS-TIZEN-BUILD.md) for current-tool build, certificate import, signing and `.wgt` review steps. Run `python3 scripts/audit-compatibility.py` to repeat structural manifest/import/asset checks. No Samsung SDK build or TV deployment was performed during the audit.
+
+
+## Light TizenShow interface
+
+Home is the initial screen. Its hero opens an actual supplied stream (currently
+the public sample) and its Movies, TV Shows and Live TV rows contain only supplied
+catalog records. See All opens the corresponding collection. Poster artwork uses
+supplied HTTP(S) poster/logo URLs; absent or failed images retain neutral cards.
+The bundled abstract landscape is original placeholder artwork, not a provider
+backdrop. The ribbon-T SVG is a vector rendition of the supplied reference rather
+than the original editable logo export. No commercial screenshot artwork, titles
+or invented stream addresses were added to the catalog.
+
+Search filters normalized titles, category names and descriptions, including
+supplied episodes and guide programmes. It does not query a new provider API or
+persist query text. Left/Right edit search text; Down enters results. Settings
+opens the existing playlist/provider connection flow and exposes catalog reload
+and status. Home/Back, show/episode return, favorite updates and player closure
+restore focus. The initial Home view and all ten sidebar buttons fit the logical
+1920×1080 TV viewport in desktop Chromium. Longer rows scroll with focus.
+
+Validation for this UI update: JavaScript syntax checks, 83 unit tests, 19 browser
+integration tests, and 41 structural manifest/import/asset checks passed. Browser
+tests cover the new Home layout, sidebar order, SVG loading, poster orientation,
+search editing, episode navigation and Settings connection controls alongside the
+existing provider/playback tests. Actual Samsung remote input, packaged SVG/module
+loading, signing and playback on the physical TV remain untested for this update.
+The earlier compatibility audit is a historical snapshot; its hardware/API/network
+limitations still apply. Use the updated source for the next build, not the older
+ZIP or installed app.

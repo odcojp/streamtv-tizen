@@ -79,3 +79,12 @@ export function selectCatalogView(mapped, screen, {favorites = [], recent = [], 
   const options = [...new Map(items.map(item => [item.category.key, item.category])).values()];
   return {items: filterByCategory(items, categoryKey), categories: options};
 }
+
+// Search only normalized, supplied metadata. No remote endpoint or inferred content.
+export function searchCatalog(mapped, query = '') {
+  const needle = String(query).trim().toLocaleLowerCase().slice(0, 128);
+  if (!needle) return [];
+  return [...mapped.items, ...mapped.episodes, ...mapped.guide].filter(item =>
+    [item.name, item.category.name, item.record.description, item.channelName]
+      .some(value => typeof value === 'string' && value.toLocaleLowerCase().includes(needle)));
+}

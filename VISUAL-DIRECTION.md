@@ -19,8 +19,19 @@ Prioritize reliable API integration, Samsung remote navigation and playback. Kee
 
 Use actual provider-supplied metadata and authorized stream URLs. Do not fabricate content or treat imagery in reference screenshots as available catalog data. Missing posters need a neutral presentation consistent with the approved design. Do not bypass provider authentication, TLS or DRM.
 
-## Current implementation versus specification
+## Implementation status
 
-The source currently contains the earlier dark StreamTV demo and seven catalog destinations plus Import playlist. The finalized light TizenShow interface, approved ribbon-T artwork, and full sidebar are not yet implemented in this source. This specification records the intended design; it does not claim the existing demo matches it.
+The supplied light-theme screenshot is now available as a visual reference. The
+source implements the light TizenShow shell, ten-item sidebar, unified Sports,
+hero, vertical poster rows, rounded cards and blue focus. Search and Settings
+use existing catalog and connection modules. The brand SVG is a vector rendition
+of the screenshot's ribbon-T; an original editable logo export was not supplied.
 
-The light-theme reference screenshots and approved logo asset are not present in the current checkout or visible conversation. Do not reconstruct their exact typography, spacing, imagery or artwork from guesses. Preserve the written direction and use the actual references when available for visual implementation/review. No UI or runtime changes were made while recording this specification.
+Screenshot film/show imagery and titles are not bundled or treated as provider
+content. The demo keeps its explicitly mock catalog, neutral poster placeholders
+and an original abstract landscape hero. Actual supplied poster/logo URLs can
+populate cards; failures keep neutral placeholders. Do not fill missing catalog
+entries merely to make rows resemble a screenshot.
+
+Visual and functional checks so far are desktop browser checks. This does not
+establish packaged Samsung TV compatibility or actual provider integration.
