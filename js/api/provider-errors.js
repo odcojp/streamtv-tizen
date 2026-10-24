@@ -29,7 +29,7 @@ export function redactProviderSecrets(value, credentials = {}) {
 
 // Diagnostics deliberately expose only these static fields, never raw objects.
 export function logProviderEvent(logger, event, details = {}) {
-  const codes = ['CREDENTIALS_REQUIRED', 'INVALID_CREDENTIALS_FORMAT', 'REDIRECT', 'AUTHENTICATION_FAILED', 'ACCESS_DENIED', 'RATE_LIMITED', 'HTTP_ERROR', 'RESPONSE_TOO_LARGE', 'TIMEOUT', 'CANCELLED', 'NETWORK_TLS_CORS', 'UNSUPPORTED_EPG', 'PROVIDER_ERROR', 'UNSUPPORTED_SCHEMA', 'CATALOG_TOO_LARGE', 'UNSUPPORTED_M3U', 'UNSUPPORTED_XML', 'XML_UNAVAILABLE', 'MALFORMED_XML', 'MALFORMED_JSON', 'HTML_PAGE', 'EMPTY_RESPONSE', 'UNSUPPORTED_FORMAT'];
+  const codes = ['INVALID_PROVIDER_LINK', 'CREDENTIALS_REQUIRED', 'INVALID_CREDENTIALS_FORMAT', 'REDIRECT', 'AUTHENTICATION_FAILED', 'ACCESS_DENIED', 'RATE_LIMITED', 'HTTP_ERROR', 'RESPONSE_TOO_LARGE', 'TIMEOUT', 'CANCELLED', 'NETWORK_TLS_CORS', 'UNSUPPORTED_EPG', 'PROVIDER_ERROR', 'UNSUPPORTED_SCHEMA', 'CATALOG_TOO_LARGE', 'UNSUPPORTED_M3U', 'UNSUPPORTED_XML', 'XML_UNAVAILABLE', 'MALFORMED_XML', 'MALFORMED_JSON', 'HTML_PAGE', 'EMPTY_RESPONSE', 'UNSUPPORTED_FORMAT'];
   const record = {event: ['connection-start', 'connection-result', 'connection-error'].includes(event) ? event : 'provider-event'};
   if (codes.includes(details.code)) record.code = details.code;
   if (['m3u', 'json', 'xml', 'html', 'empty', 'unknown', 'redirect'].includes(details.format)) record.format = details.format;

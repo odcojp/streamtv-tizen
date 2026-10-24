@@ -22,9 +22,25 @@ export function buildLaonUrl({username, password} = {}) {
   return ENDPOINT + segment(username) + '/' + segment(password);
 }
 
+// Accept only the confirmed endpoint; decode each credential exactly once,
+// then reuse the account URL builder. Never forward arbitrary pasted URLs.
+export function parseLaonLink(input) {
+  const invalid = () => new ProviderAdapterError('INVALID_PROVIDER_LINK', 'Enter a complete HTTPS laon.live link in the form /api/list/USERNAME/PASSWORD. Extra paths, queries and fragments are not supported.');
+  if (typeof input !== 'string') throw invalid();
+  const value = input.trim();
+  try {
+    const url = new URL(value);
+    const raw = value.match(/^https:\/\/([^/?#]+)(\/[^?#]*)$/i);
+    const path = raw && raw[2].match(/^\/api\/list\/([^/\\]+)\/([^/\\]+)\/?$/);
+    if (url.origin !== 'https://laon.live' || url.username || url.password || url.search || url.hash || !path) throw invalid();
+    const credentials = {username: decodeURIComponent(path[1]), password: decodeURIComponent(path[2])};
+    buildLaonUrl(credentials);
+    return credentials;
+  } catch (_) { throw invalid(); }
+}
+
 export function createLaonAdapter({fetchImpl = globalThis.fetch, timeoutMs = 30000, logger = () => {}, DOMParserImpl = globalThis.DOMParser} = {}) {
-  return {
-    async connect(credentials, {signal} = {}) {
+  async function connect(credentials, {signal} = {}) {
       const url = buildLaonUrl(credentials);
       const request = new AbortController();
       let timedOut = false;
@@ -71,6 +87,6 @@ export function createLaonAdapter({fetchImpl = globalThis.fetch, timeoutMs = 300
         clearTimeout(timeout);
         signal?.removeEventListener('abort', cancel);
       }
-    }
-  };
+  }
+  return {connect, async connectLink(link, options) { return connect(parseLaonLink(link), options); }};
 }

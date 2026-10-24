@@ -349,3 +349,37 @@ loading, signing and playback on the physical TV remain untested for this update
 The earlier compatibility audit is a historical snapshot; its hardware/API/network
 limitations still apply. Use the updated source for the next build, not the older
 ZIP or installed app.
+
+
+## Full provider login links
+
+Provider Settings now opens in **Use provider link** mode. Enter the complete
+`https://laon.live/api/list/USERNAME/PASSWORD` link into its masked login-link
+field. Separate username/password fields remain available as an alternate mode.
+A complete HTTP(S) link pasted into the old username field switches to link mode
+without making a request. A confirmed laon.live `/api/list/` link submitted in
+Import playlist opens the provider connection dialog for explicit Connect,
+rather than treating that endpoint as a generic M3U download or saving its link.
+
+Full-link validation permits only HTTPS on the confirmed laon.live origin and
+exactly two credential path segments, with an optional trailing slash. URL
+userinfo, extra path segments, queries, fragments, malformed escapes and dot
+segments are rejected before fetching. Each credential is decoded once and then
+encoded through the existing account URL builder. No credentials are hardcoded,
+logged or persisted by this mode. The private link clears after success/failure,
+on mode changes and on closing; pending requests cancel when changing modes.
+
+The same response detector handles M3U, supported JSON/XML, authentication errors,
+redirects and unexpected HTML. A correct link can still receive an HTML access or
+login page; supporting full-link entry is not proof the provider accepts our
+request. There is no header spoofing, cookie/DRM bypass or automatic redirect
+following. Real responses remain inspection-only until safely verified. This
+update passed 86 unit tests, 22 browser tests, syntax checks and the 41 structural
+checks, using synthetic credentials and intercepted responses only.
+
+The user subsequently reported launching the light interface on the physical TV
+and playing the public sample through TV Guide. That is user-reported evidence,
+not a deployment performed by this cloud agent. This newer full-link change has
+not yet been rebuilt or tested on that TV. The user reports the exact private
+link works in Startup Show; no actual private link or credentials were supplied
+to this workspace.

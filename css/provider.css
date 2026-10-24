@@ -9,3 +9,7 @@
 #provider-dialog button{padding:14px 22px;background:#25483f;color:white;border:1px solid #52796d;border-radius:10px;font-size:23px;margin-right:20px}
 #provider-dialog button:disabled{opacity:.35}
 #provider-message{min-height:100px;overflow-wrap:anywhere;margin-bottom:0}
+#provider-dialog [hidden]{display:none}
+#provider-dialog .provider-mode{display:flex;gap:12px;margin:0 0 24px}
+#provider-dialog .provider-mode button{font-size:20px;margin:0}
+#provider-dialog .provider-mode button[aria-pressed="true"]{border:2px solid #246bff}

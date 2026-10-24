@@ -162,10 +162,11 @@ test('AVPlay module prepares, closes on Back and ignores callbacks from an older
   assert.equal(await page.locator('#player').isHidden(), true);
 });
 
-async function openProviderSettings(page) {
+async function openProviderSettings(page, mode = 'account') {
   await page.getByRole('button', {name: 'Import playlist', exact: true}).click();
   await page.getByRole('button', {name: 'Provider settings', exact: true}).click();
-  await page.locator('#provider-username').waitFor();
+  if (mode === 'account') await page.getByRole('button', {name: 'Use username and password', exact: true}).click();
+  await page.locator(mode === 'account' ? '#provider-username' : '#provider-link').waitFor();
 }
 
 test('custom provider settings use separate fields, encoded credentials and existing channel UI', async t => {
@@ -453,4 +454,54 @@ test('Search filters supplied metadata without leaving text editing and Settings
   assert.equal(await page.locator('#playlist-dialog').isVisible(), true);
   await page.keyboard.press('Escape');
   assert.equal(await page.getByRole('button', {name: 'Manage playlist and provider', exact: true}).evaluate(element => element === document.activeElement), true);
+});
+
+
+test('provider link mode sends one encoded endpoint, handles JSON and clears the private link', async t => {
+  const page = await newPage(t); let requests = 0;
+  await page.route('https://laon.live/api/list/**', route => {
+    requests++; assert.equal(route.request().url(), 'https://laon.live/api/list/mock%2Fuser/mock%3Fpass%23');
+    return route.fulfill({status:200, contentType:'application/json', headers:{'access-control-allow-origin':'*'},
+      body:JSON.stringify({channels:[{name:'Mock Link Channel',url:'https://example.org/live.m3u8'}]})});
+  });
+  await openProviderSettings(page, 'link');
+  assert.equal(await page.locator('#provider-link').getAttribute('type'), 'password');
+  await page.locator('#provider-link').fill('https://laon.live/api/list/mock%2Fuser/mock%3Fpass%23');
+  await page.keyboard.press('ArrowLeft');
+  assert.equal(await page.locator('#provider-link').evaluate(element => element === document.activeElement), true);
+  await page.getByRole('button', {name:'Connect',exact:true}).click();
+  await page.locator('#provider-message').filter({hasText:'Received JSON: 1 channels'}).waitFor();
+  assert.equal(requests,1); assert.equal(await page.locator('#provider-link').inputValue(),'');
+  assert.deepEqual(await page.evaluate(() => Object.keys(localStorage)),[]);
+  assert.equal(await page.getByRole('button',{name:'Show channels',exact:true}).isDisabled(),true);
+});
+
+test('a full link pasted in the old username field switches safely and HTML remains a provider error', async t => {
+  const page = await newPage(t); let requests = 0;
+  await page.route('https://laon.live/api/list/**', route => {
+    requests++; assert.equal(route.request().url(),'https://laon.live/api/list/mock-user/mock-secret');
+    return route.fulfill({status:200,contentType:'text/html',headers:{'access-control-allow-origin':'*'},body:'<html>private mock-secret response</html>'});
+  });
+  await openProviderSettings(page);
+  await page.locator('#provider-username').fill('https://laon.live/api/list/mock-user/mock-secret');
+  assert.equal(await page.locator('#provider-link').isVisible(),true);
+  assert.equal(await page.locator('#provider-username').inputValue(),'');
+  await page.getByRole('button',{name:'Connect',exact:true}).click();
+  await page.locator('#provider-message').filter({hasText:'Provider returned a web page'}).waitFor();
+  assert.equal(requests,1);
+  assert.ok(!(await page.locator('#provider-message').textContent()).includes('mock-secret'));
+  assert.equal(await page.locator('#provider-link').inputValue(),'');
+  assert.deepEqual(await page.evaluate(() => Object.keys(localStorage)),[]);
+  assert.equal(await page.getByRole('button',{name:'Connect',exact:true}).isEnabled(),true);
+});
+
+test('Import playlist routes confirmed provider links to provider mode without fetching or saving them', async t => {
+  const page = await newPage(t); let requests = 0;
+  await page.route('https://laon.live/**', route => { requests++; return route.abort(); });
+  await importList(page,'https://laon.live/api/list/mock-user/mock-secret',true);
+  await page.locator('#provider-link').waitFor();
+  assert.equal(await page.locator('#provider-link').inputValue(),'https://laon.live/api/list/mock-user/mock-secret');
+  assert.equal(requests,0); assert.deepEqual(await page.evaluate(() => Object.keys(localStorage)),[]);
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('#provider-link').inputValue(),'');
 });

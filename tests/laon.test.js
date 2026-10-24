@@ -115,3 +115,41 @@ test('diagnostics discard arbitrary messages, credentials and URLs even in metad
   assert.deepEqual(logs, [{event: 'provider-event', status: 401}]);
   assert.doesNotThrow(() => logProviderEvent(() => { throw new Error('logger failure'); }, 'connection-start'));
 });
+
+test('full login links decode credentials once and reuse the encoded account endpoint', async () => {
+  const {parseLaonLink} = await import('../js/api/laon.js');
+  const link = 'https://laon.live/api/list/mock%2Fuser/mock%252F%20pass%23';
+  assert.deepEqual(parseLaonLink(link), {username: 'mock/user', password: 'mock%2F pass#'});
+  let calls = 0;
+  const adapter = createLaonAdapter({fetchImpl: async url => {
+    calls++; assert.equal(url, link); return response('{"channels":[{"name":"Mock Link Channel","url":"https://example.org/one.m3u8"}]}');
+  }});
+  const result = await adapter.connectLink(link);
+  assert.equal(result.format, 'json'); assert.equal(result.catalog.channels[0].name, 'Mock Link Channel'); assert.equal(calls, 1);
+  assert.deepEqual(parseLaonLink('  https://laon.live/api/list/mock/mock/  '), {username:'mock', password:'mock'});
+});
+test('invalid or foreign login links fail safely before any request', async () => {
+  const adapter = createLaonAdapter({fetchImpl: () => assert.fail('Do not fetch invalid links')});
+  for (const link of [undefined, '', 'https://example.org/api/list/mock/mock', 'http://laon.live/api/list/mock/mock',
+    'https://laon.live.evil.example/api/list/mock/mock', 'https://user:pass@laon.live/api/list/mock/mock',
+    'https://laon.live/api/list/mock/mock?token=secret', 'https://laon.live/api/list/mock/mock#secret',
+    'https://laon.live/api/list/mock/mock/extra', 'https://laon.live/api/list/%2E%2E/mock',
+    'https://laon.live/api/list/mock/%GG', 'https://laon.live/api/list/mock/',
+    'https://laon.live/api/list/mock/other\\path', 'https://laon.live/API/LIST/mock/mock']) {
+    await assert.rejects(adapter.connectLink(link), error => error.code === 'INVALID_PROVIDER_LINK' && !error.message.includes('secret') && !error.message.includes('https://'));
+  }
+});
+test('full login links retain HTML/auth/redirect/network handling without exposing the link', async () => {
+  const link = 'https://laon.live/api/list/mock-secret-user/mock-secret-pass';
+  for (const [body, options, code] of [
+    ['<html>mock-secret-user</html>', {}, 'HTML_PAGE'],
+    ['', {ok:false, status:401}, 'AUTHENTICATION_FAILED'],
+    ['', {ok:false, status:302}, 'REDIRECT']
+  ]) {
+    const logs = [];
+    const adapter = createLaonAdapter({logger: value => logs.push(value), fetchImpl: async () => response(body, options)});
+    await assert.rejects(adapter.connectLink(link), error => error.code === code && !error.message.includes('mock-secret'));
+    assert.ok(!JSON.stringify(logs).includes('mock-secret'));
+  }
+  await assert.rejects(createLaonAdapter({fetchImpl: async () => { throw new Error(link); }}).connectLink(link), {code:'NETWORK_TLS_CORS'});
+});

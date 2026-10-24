@@ -38,6 +38,11 @@ export function createPlaylistUI({document, importButton, provider, settings, ca
     const request = new AbortController(); controller = request;
     const address = input.value.trim();
     submit.disabled = true; message.textContent = 'Loading playlist...';
+    if (onOpenProviderSettings) {
+      let customLink = false;
+      try { const url = new URL(address); customLink = url.origin === 'https://laon.live' && url.pathname.startsWith('/api/list/'); } catch (_) { /* Normal importer validation follows. */ }
+      if (customLink) { close(); onOpenProviderSettings(address); return; }
+    }
     try {
       const response = await provider.loadPlaylist(address, {signal: request.signal});
       const list = parseM3U(response.text, response.baseUrl);

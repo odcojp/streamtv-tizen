@@ -80,3 +80,20 @@ A `.wgt` is ZIP-based. Inspect a copy with an archive viewer and confirm:
 Keep `StreamDemo.StreamTV` / `StreamDemo` if updating the existing app. A changed ID creates a different app identity; a changed author certificate can prevent updates. Signing for a device requires valid Samsung certificates and the correct DUID, not just a syntactically valid manifest.
 
 This procedure ends with review of a signed package. Installation, launch, remote checks, packaged ES-module loading and AVPlay decoding must be performed separately on the physical Samsung TV using [PLAYBACK-CHECKLIST.md](PLAYBACK-CHECKLIST.md). None are claimed complete here.
+
+
+## Observed VS Code deployment-name workaround
+
+In the user's extension log, packaging/signing succeeded and the TV connected,
+but Run attempted to uninstall `StreamDemo.streamtv-tizen-main` despite both
+source and generated config declaring `StreamDemo.StreamTV`. Creating a clean
+working project folder named `StreamTV`, reselecting the TV and existing IPTV
+certificate, then rebuilding/running allowed the user to launch the app.
+Preserve this working folder name for subsequent updates; do not change the app
+identity or replace certificates to match a downloaded ZIP folder name.
+
+For the full-provider-link update, the runtime changes are confined to `js/` and
+`css/`. Copy those two directories from the latest download into the existing
+working `StreamTV` folder, merging/replacing their files, then rebuild and run.
+Do not copy generated `Debug`, `Release`, `.tizen-rds` or project YAML data from
+another project folder. Keep local certificates outside the source tree.
