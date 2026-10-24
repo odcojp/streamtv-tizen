@@ -505,3 +505,21 @@ test('Import playlist routes confirmed provider links to provider mode without f
   await page.keyboard.press('Escape');
   assert.equal(await page.locator('#provider-link').inputValue(),'');
 });
+
+test('infolink.me full-link connection preserves the supplied host and detects the actual response', async t => {
+  const page=await newPage(t); let actualCalls=0, otherCalls=0;
+  await page.route('https://laon.live/**',route=>{otherCalls++;return route.abort();});
+  await page.route('https://infolink.me/api/list/**',route=>{
+    actualCalls++; assert.equal(route.request().url(),'https://infolink.me/api/list/mock%2Fuser/mock%3Fpass%23');
+    return route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({channels:[{name:'Mock Infolink Channel',url:'https://example.org/live.m3u8'}]})});
+  });
+  await importList(page,'https://infolink.me/api/list/mock%2Fuser/mock%3Fpass%23',true);
+  await page.locator('#provider-link').waitFor();
+  assert.equal(actualCalls,0);
+  await page.getByRole('button',{name:'Connect',exact:true}).click();
+  await page.locator('#provider-message').filter({hasText:'Received JSON: 1 channels'}).waitFor();
+  assert.equal(actualCalls,1);assert.equal(otherCalls,0);
+  assert.equal(await page.locator('#provider-link').inputValue(),'');
+  assert.deepEqual(await page.evaluate(()=>Object.keys(localStorage)),[]);
+  assert.equal(await page.getByRole('button',{name:'Show channels',exact:true}).isDisabled(),true);
+});

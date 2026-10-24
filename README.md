@@ -354,14 +354,15 @@ ZIP or installed app.
 ## Full provider login links
 
 Provider Settings now opens in **Use provider link** mode. Enter the complete
-`https://laon.live/api/list/USERNAME/PASSWORD` link into its masked login-link
-field. Separate username/password fields remain available as an alternate mode.
+`https://infolink.me/api/list/USERNAME/PASSWORD` link into its masked login-link
+field. The earlier laon.live endpoint remains supported; full-link requests keep
+the exact approved origin supplied by the user. Separate username/password fields remain available as an alternate mode.
 A complete HTTP(S) link pasted into the old username field switches to link mode
-without making a request. A confirmed laon.live `/api/list/` link submitted in
+without making a request. A confirmed laon.live or infolink.me `/api/list/` link submitted in
 Import playlist opens the provider connection dialog for explicit Connect,
 rather than treating that endpoint as a generic M3U download or saving its link.
 
-Full-link validation permits only HTTPS on the confirmed laon.live origin and
+Full-link validation permits only HTTPS on the confirmed laon.live and infolink.me origins and
 exactly two credential path segments, with an optional trailing slash. URL
 userinfo, extra path segments, queries, fragments, malformed escapes and dot
 segments are rejected before fetching. Each credential is decoded once and then
@@ -383,3 +384,22 @@ not a deployment performed by this cloud agent. This newer full-link change has
 not yet been rebuilt or tested on that TV. The user reports the exact private
 link works in Startup Show; no actual private link or credentials were supplied
 to this workspace.
+
+
+### Confirmed provider host correction
+
+The user supplied a redacted Startup Show login screenshot showing
+`https://infolink.me/api/list/…` and explicitly confirmed infolink.me as the actual
+host. The adapter now supports that exact HTTPS origin in full-link mode and
+preserves it during credential decoding/re-encoding. It never rewrites an infolink
+login to laon.live. Legacy separate account mode still targets laon.live; use the
+complete provider link for infolink.me. The original module filename and Laon
+entry points remain for compatibility; app wiring uses createProviderAdapter.
+
+No private credentials, complete account URL or real provider response were
+provided or fetched. Shared path structure does not establish shared schemas or
+server behavior. HTML, authentication failures and redirects are still reported;
+the provider source gate remains active. Tests include infolink origin retention,
+encoded credentials, unknown-host rejection, HTML/auth/redirect safety and Import
+playlist routing. Latest validation: 88 unit tests and 23 browser tests, plus
+syntax and structural checks. The correction still requires a rebuilt TV app.

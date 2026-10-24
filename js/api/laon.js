@@ -1,10 +1,12 @@
 import {ProviderAdapterError, logProviderEvent} from './provider-errors.js';
 import {detectProviderResponse, normalizeProviderResponse} from './provider-response.js';
 
-const ENDPOINT = 'https://laon.live/api/list/';
+export const PROVIDER_ORIGINS = Object.freeze(['https://laon.live', 'https://infolink.me']);
+const invalidLink = () => new ProviderAdapterError('INVALID_PROVIDER_LINK', 'Enter a complete HTTPS laon.live or infolink.me link in the form /api/list/USERNAME/PASSWORD. Extra paths, queries and fragments are not supported.');
 const MAX_RESPONSE_LENGTH = 20 * 1024 * 1024;
 
-export function buildLaonUrl({username, password} = {}) {
+export function buildProviderUrl({origin = PROVIDER_ORIGINS[0], username, password} = {}) {
+  if (!PROVIDER_ORIGINS.includes(origin)) throw invalidLink();
   for (const value of [username, password]) {
     if (typeof value !== 'string' || !value.length)
       throw new ProviderAdapterError('CREDENTIALS_REQUIRED', 'Enter both username and password.');
@@ -19,29 +21,37 @@ export function buildLaonUrl({username, password} = {}) {
       throw new ProviderAdapterError('INVALID_CREDENTIALS_FORMAT', 'Credentials contain invalid Unicode.');
     }
   }
-  return ENDPOINT + segment(username) + '/' + segment(password);
+  return origin + '/api/list/' + segment(username) + '/' + segment(password);
 }
 
 // Accept only the confirmed endpoint; decode each credential exactly once,
 // then reuse the account URL builder. Never forward arbitrary pasted URLs.
-export function parseLaonLink(input) {
-  const invalid = () => new ProviderAdapterError('INVALID_PROVIDER_LINK', 'Enter a complete HTTPS laon.live link in the form /api/list/USERNAME/PASSWORD. Extra paths, queries and fragments are not supported.');
+export function parseProviderLink(input) {
+  const invalid = invalidLink;
   if (typeof input !== 'string') throw invalid();
   const value = input.trim();
   try {
     const url = new URL(value);
     const raw = value.match(/^https:\/\/([^/?#]+)(\/[^?#]*)$/i);
     const path = raw && raw[2].match(/^\/api\/list\/([^/\\]+)\/([^/\\]+)\/?$/);
-    if (url.origin !== 'https://laon.live' || url.username || url.password || url.search || url.hash || !path) throw invalid();
-    const credentials = {username: decodeURIComponent(path[1]), password: decodeURIComponent(path[2])};
-    buildLaonUrl(credentials);
+    if (!PROVIDER_ORIGINS.includes(url.origin) || url.username || url.password || url.search || url.hash || !path) throw invalid();
+    const credentials = {origin: url.origin, username: decodeURIComponent(path[1]), password: decodeURIComponent(path[2])};
+    buildProviderUrl(credentials);
     return credentials;
   } catch (_) { throw invalid(); }
 }
 
+// Preserve the existing Laon-specific entry points for account-mode callers.
+export function buildLaonUrl(credentials) { return buildProviderUrl({...credentials, origin: PROVIDER_ORIGINS[0]}); }
+export function parseLaonLink(input) {
+  const {origin, username, password} = parseProviderLink(input);
+  if (origin !== PROVIDER_ORIGINS[0]) throw invalidLink();
+  return {username, password};
+}
+
 export function createLaonAdapter({fetchImpl = globalThis.fetch, timeoutMs = 30000, logger = () => {}, DOMParserImpl = globalThis.DOMParser} = {}) {
   async function connect(credentials, {signal} = {}) {
-      const url = buildLaonUrl(credentials);
+      const url = buildProviderUrl(credentials);
       const request = new AbortController();
       let timedOut = false;
       const cancel = () => request.abort();
@@ -88,5 +98,7 @@ export function createLaonAdapter({fetchImpl = globalThis.fetch, timeoutMs = 300
         signal?.removeEventListener('abort', cancel);
       }
   }
-  return {connect, async connectLink(link, options) { return connect(parseLaonLink(link), options); }};
+  return {connect, async connectLink(link, options) { return connect(parseProviderLink(link), options); }};
 }
+
+export const createProviderAdapter = createLaonAdapter;

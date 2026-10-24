@@ -153,3 +153,32 @@ test('full login links retain HTML/auth/redirect/network handling without exposi
   }
   await assert.rejects(createLaonAdapter({fetchImpl: async () => { throw new Error(link); }}).connectLink(link), {code:'NETWORK_TLS_CORS'});
 });
+
+test('screenshot-confirmed infolink.me links preserve their origin and credential encoding', async () => {
+  const {parseProviderLink, buildProviderUrl} = await import('../js/api/laon.js');
+  const link = 'https://infolink.me/api/list/mock%2Fuser/mock%252F%20pass%23';
+  const credentials = parseProviderLink(link);
+  assert.deepEqual(credentials,{origin:'https://infolink.me',username:'mock/user',password:'mock%2F pass#'});
+  assert.equal(buildProviderUrl(credentials),link);
+  assert.equal(buildLaonUrl(credentials),link.replace('infolink.me','laon.live'));
+  let calls = 0;
+  const result = await createLaonAdapter({fetchImpl: async (url, options) => {
+    calls++; assert.equal(url,link); assert.equal(options.redirect,'manual');
+    return response(simpleM3U);
+  }}).connectLink(link);
+  assert.equal(calls,1); assert.equal(result.format,'m3u');
+});
+test('infolink origin does not authorize aliases, arbitrary hosts, queries or redirect following', async () => {
+  const {parseProviderLink, buildProviderUrl} = await import('../js/api/laon.js');
+  for (const link of ['http://infolink.me/api/list/mock/mock','https://infolink.me.evil.example/api/list/mock/mock',
+    'https://infolink.me/api/list/mock/mock?secret=x','https://infolink.me/api/list/mock/mock#secret',
+    'https://infolink.me/api/list/mock/%2e%2e','https://infolink.me/api/list/mock/mock/extra'])
+    assert.throws(() => parseProviderLink(link),{code:'INVALID_PROVIDER_LINK'});
+  assert.throws(() => buildProviderUrl({origin:'https://example.org',username:'mock',password:'mock'}),{code:'INVALID_PROVIDER_LINK'});
+  for (const [body, options, code] of [['<html>mock-secret</html>',{},'HTML_PAGE'],['',{status:401,ok:false},'AUTHENTICATION_FAILED'],['',{status:302,ok:false},'REDIRECT']]) {
+    const logs=[];
+    const adapter=createLaonAdapter({logger:entry=>logs.push(entry),fetchImpl:async()=>response(body,options)});
+    await assert.rejects(adapter.connectLink('https://infolink.me/api/list/mock-user/mock-secret'),error=>error.code===code&&!error.message.includes('mock-secret'));
+    assert.ok(!JSON.stringify(logs).includes('mock-secret'));
+  }
+});

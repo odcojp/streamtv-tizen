@@ -5,7 +5,7 @@ import {createCatalogUI} from './ui/catalog.js';
 import {createPlaylistUI} from './ui/playlist.js';
 import {createRemoteNavigation} from './ui/remote.js';
 import {createSettings} from './ui/settings.js';
-import {createLaonAdapter} from './api/laon.js';
+import {createProviderAdapter} from './api/laon.js';
 import {createProviderSettingsUI} from './ui/provider-settings.js';
 import {mapCatalog} from './api/catalog-views.js';
 import {createCatalogStore, createMockCatalogLoader} from './api/catalog-store.js';
@@ -22,7 +22,7 @@ const player = createPlayerController({document, avplay: playbackEngine,
 const importButton = document.createElement('button');
 importButton.textContent = 'Import playlist';
 catalog = createCatalogUI({document, store, library, onPlay: player.open, importButton});
-const connection = createProviderSettingsUI({document, adapter: createLaonAdapter(), onChannels: () => {}, canUseCatalog: catalog.canUseProviderCatalog});
+const connection = createProviderSettingsUI({document, adapter: createProviderAdapter(), onChannels: () => {}, canUseCatalog: catalog.canUseProviderCatalog});
 const playlist = createPlaylistUI({document, importButton, provider: createProviderConnection(), settings: createSettings(), catalog, onOpenProviderSettings: connection.open});
 createRemoteNavigation({document, player, playlist, connection, catalog, importButton});
 

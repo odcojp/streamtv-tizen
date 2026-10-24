@@ -1,3 +1,4 @@
+import {PROVIDER_ORIGINS} from '../api/laon.js';
 import {parseM3U} from '../api/playlist.js';
 
 export function createPlaylistUI({document, importButton, provider, settings, catalog, onOpenProviderSettings}) {
@@ -40,7 +41,7 @@ export function createPlaylistUI({document, importButton, provider, settings, ca
     submit.disabled = true; message.textContent = 'Loading playlist...';
     if (onOpenProviderSettings) {
       let customLink = false;
-      try { const url = new URL(address); customLink = url.origin === 'https://laon.live' && url.pathname.startsWith('/api/list/'); } catch (_) { /* Normal importer validation follows. */ }
+      try { const url = new URL(address); customLink = PROVIDER_ORIGINS.includes(url.origin) && url.pathname.startsWith('/api/list/'); } catch (_) { /* Normal importer validation follows. */ }
       if (customLink) { close(); onOpenProviderSettings(address); return; }
     }
     try {
