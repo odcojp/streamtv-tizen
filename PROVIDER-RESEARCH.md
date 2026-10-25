@@ -78,3 +78,30 @@ checkpoint. The last application commit remains a158af8, with 88 unit tests and
 23 browser tests last reported passing. Tests were not rerun for this document.
 No third-party code or binaries were copied into the application. A new install
 is not required for the diagnostic test above.
+
+## Candidate playlist test result and next diagnostic
+
+The user reports that the same-host `/m3u8/movies` candidate also returns E01.
+That candidate is not verified as a working feed for this account; stop trying
+additional playlist suffixes or numbered feeds on its basis.
+
+`scripts/Test-ProviderLogin.ps1` prepares the remaining normal JSON-login
+hypothesis for a user-side Windows check. It posts the parsed username/password
+once to `https://infolink.me/api/login`, using a masked local prompt for the
+original full link. This route is suggested only by the older community client's
+`/api/login` contract on a different host; it is not confirmed for infolink.me.
+The script does not send credentials to the community example's tvnow.best host.
+It disables redirects/cookies, keeps normal TLS validation, bounds buffered
+responses to 1 MiB, and outputs only the HTTP status plus fixed result labels.
+No response bodies, tokens, URLs or credentials are printed or written to disk.
+A recognized token-shaped JSON response would be evidence to investigate, not
+proof of catalog/playback access. Other JSON remains unsupported until examined
+through a separately reviewed, sanitized schema diagnostic.
+
+PowerShell is unavailable in the cloud environment, so this Windows script was
+reviewed as source but has not been executed or runtime-tested here. No private
+request has been performed. The TV application source and active connection
+method remain unchanged. The script can be reviewed on GitHub and its contents
+pasted into the user's existing Windows PowerShell terminal; no application
+reinstallation is needed. If local Windows policies prevent use, stop and report
+the general error rather than changing security policies.
