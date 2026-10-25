@@ -1,7 +1,7 @@
 # Candidate normal JSON login diagnostic, based on an older public community
-# client. /api/login is NOT yet verified for the user's infolink.me account.
+# client. /api/login is NOT yet verified for the user's account.
 # Run on your own Windows PC. No private link/password/token is printed or saved.
-# Only one request is sent, to https://infolink.me/api/login, without redirects.
+# One request is sent to /api/login on the supplied confirmed host, without redirects.
 # This script has not been executed in the Linux cloud (PowerShell unavailable).
 
 $secureLink = $null
@@ -17,17 +17,20 @@ $client = $null
 $handler = $null
 try {
     Add-Type -AssemblyName System.Net.Http -ErrorAction Stop
-    Write-Output 'Candidate JSON login test on infolink.me; no catalog request follows.'
-    $secureLink = Read-Host 'Paste your complete infolink.me login link (input hidden)' -AsSecureString
+    Write-Output 'Candidate JSON login test on your supplied host; no catalog request follows.'
+    $secureLink = Read-Host 'Paste your complete infolink.me or laon.live login link (input hidden)' -AsSecureString
     $plainLink = ([System.Net.NetworkCredential]::new('', $secureLink)).Password.Trim()
-    $match = [regex]::Match($plainLink, '^(?i:https://infolink\.me(?::443)?)/api/list/([^/?#\\]+)/([^/?#\\]+)/?$')
+    $match = [regex]::Match($plainLink, '^(?i:https://(infolink\.me|laon\.live)(?::443)?)/api/list/([^/?#\\]+)/([^/?#\\]+)/?$')
     if (-not $match.Success -or $plainLink -match '%(?![0-9A-Fa-f]{2})') {
-        Write-Output 'RESULT: INVALID_LINK_FORMAT. Expected your original HTTPS infolink.me login link.'
+        Write-Output 'RESULT: INVALID_LINK_FORMAT. Expected your original HTTPS infolink.me or laon.live login link.'
         return
     }
+    $providerHost = $match.Groups[1].Value.ToLowerInvariant()
+    $endpoint = 'https://' + $providerHost + '/api/login'
+    Write-Output ('HOST: ' + $providerHost)
     $login = @{
-        username = [Uri]::UnescapeDataString($match.Groups[1].Value)
-        password = [Uri]::UnescapeDataString($match.Groups[2].Value)
+        username = [Uri]::UnescapeDataString($match.Groups[2].Value)
+        password = [Uri]::UnescapeDataString($match.Groups[3].Value)
     }
     if (-not $login.username -or -not $login.password -or $login.username -in @('.', '..') -or $login.password -in @('.', '..')) {
         Write-Output 'RESULT: INVALID_LINK_FORMAT.'
@@ -41,7 +44,7 @@ try {
     $client.Timeout = [TimeSpan]::FromSeconds(25)
     $client.MaxResponseContentBufferSize = 1048576
     $content = [System.Net.Http.StringContent]::new($json, [Text.Encoding]::UTF8, 'application/json')
-    $response = $client.PostAsync('https://infolink.me/api/login', $content).GetAwaiter().GetResult()
+    $response = $client.PostAsync($endpoint, $content).GetAwaiter().GetResult()
     $status = [int]$response.StatusCode
     Write-Output ('HTTP_STATUS: ' + $status)
     if ($status -ge 300 -and $status -lt 400) {
@@ -89,5 +92,5 @@ try {
     if ($null -ne $secureLink) { $secureLink.Dispose() }
     $secureLink = $null; $plainLink = $null; $json = $null
     $body = $null; $parsed = $null; $match = $null; $login = $null
-    Write-Output 'Copy only HTTP_STATUS and RESULT lines when reporting the outcome.'
+    Write-Output 'Copy only HOST, HTTP_STATUS and RESULT lines when reporting the outcome.'
 }

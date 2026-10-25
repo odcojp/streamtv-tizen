@@ -105,3 +105,17 @@ method remain unchanged. The script can be reviewed on GitHub and its contents
 pasted into the user's existing Windows PowerShell terminal; no application
 reinstallation is needed. If local Windows policies prevent use, stop and report
 the general error rather than changing security policies.
+
+
+### Additional confirmed login host
+
+The user also reports successful use of a laon.live `/api/list/` login link.
+Both hostnames are therefore user-confirmed login-link origins; this does not
+prove their API schemas, ownership or transport behavior are identical. The
+Windows diagnostic now accepts either exact HTTPS hostname and uses the hostname
+from the entered link for its one candidate `/api/login` request. It does not
+substitute a hostname, follow redirects or try the second host automatically.
+It reports the non-secret HOST alongside HTTP_STATUS and a fixed RESULT label.
+The earlier single-host diagnostic description above is superseded by this
+host-preserving update. No authenticated diagnostic has been run by this agent;
+PowerShell runtime validation is still outstanding.
