@@ -1,0 +1,80 @@
+# Apollo / Startup Show connection investigation
+
+Research checkpoint: 2026-10-24 (user's America/New_York date). This records
+observations and candidate tests; it is not a claim that an Apollo API or schema
+has been verified for the user's account.
+
+## Established observations
+
+- The user reports a fresh, successful Startup Show login and channel loading
+  using their original infolink.me `/api/list/…/…` link.
+- The user reports testing on the home network without a VPN.
+- Direct Edge access ends at an infolink error MP4 showing E01 (bad username/email
+  or password). The VLC test shows the same error video.
+- TizenShow's confirmed-host/full-link update receives HTML rather than supported
+  catalog data. It keeps the user-supplied approved origin and encodes each
+  credential path segment independently.
+- These results do not establish wrong credentials, a device lock, a required
+  user-agent, a CORS cause, or a ban on third-party clients.
+- No real credentials or complete private login URL were supplied to this
+  workspace. No authenticated provider request was made here.
+
+## Public evidence located
+
+Official provider/help pages remain inaccessible from this environment (HTTP
+403). Public GitHub repository search and read-only source retrieval succeeded.
+The sources below are independent community projects, not verified official
+Apollo/Startup Show documentation. Third-party source was inspected as data;
+no downloaded scripts, clients or dependencies were executed or installed.
+
+| Source | Observed implementation | Limit |
+| --- | --- | --- |
+| [bruor/Apollo_m3u_to_strm README](https://github.com/bruor/Apollo_m3u_to_strm/blob/9b46b5fd59b3b558807d9da363eedb4a237a78d3/readme.md#L38-L42) | Lists an Apollo movie M3U address with an extra `/m3u8/movies` suffix; series feeds add `/m3u8/tvshows/1` and subsequent feed numbers | Community material last updated 2023-07-26; examples use tvnow.best, not the user's confirmed infolink.me host. Does not prove those paths work today or across hosts |
+| [dmr121/startupshow-clone-macos authentication](https://github.com/dmr121/startupshow-clone-macos/blob/758af7c6ebd2610db8c1e65770326547e77a4718/Startup/View%20Models/AuthenticationViewModel.swift#L43-L80) | Extracts credentials from the pasted link, posts JSON to a login route, then uses a bearer token for requests | Unofficial Mac client, repository checkpoint 2024-05-31; does not prove how the official Startup Show app works today |
+| [Same client's constants](https://github.com/dmr121/startupshow-clone-macos/blob/758af7c6ebd2610db8c1e65770326547e77a4718/Startup/Constants.swift#L11-L17) | Base API is tvnow.best/api | Does not establish ownership, compatibility, or authorization to send this user's credentials to that host |
+| [Same client's live playback request](https://github.com/dmr121/startupshow-clone-macos/blob/758af7c6ebd2610db8c1e65770326547e77a4718/Startup/View%20Models/LiveTVChannelViewModel.swift#L74-L94) | Authenticated request reads a `data.secure_link` result before playback | A source-code example, not an actual response for this account; cannot be treated as a verified schema |
+
+The evidence supports a hypothesis worth investigating: an app's pasted login
+link may be used as a credential container rather than fetched verbatim as a
+playlist. It does not establish that the direct playlist route or token route
+works on infolink.me. Earlier full-link input and host fixes remain useful, but
+they do not establish the provider's connection protocol.
+
+## Next single diagnostic test
+
+On the user's own PC, take the existing working HTTPS infolink.me login link and
+append `/m3u8/movies` once to the end (after the password; remove a trailing slash
+before appending if needed). Keep the domain and credentials unchanged. This is
+a candidate path based on the older published community example, not a confirmed
+provider endpoint. Do not change hosts or try arbitrary feed IDs.
+
+Open it privately in Edge and report only the outcome: file download, text
+starting `#EXTM3U`, JSON, E01 error video, or another general error. Do not upload
+the returned playlist, a network capture, or the private link. Actual channel
+stream URLs can themselves contain secrets. A failed candidate test should stop
+this branch of investigation rather than trigger enumeration or repeated login
+attempts.
+
+Do not paste the extended candidate path into the current TizenShow provider
+connection field yet: its full-link validation deliberately supports only the
+confirmed two-credential base path. If the candidate yields usable data, add a
+separate explicit playlist route with mock fixtures and tests; do not relax URL
+validation globally or invent movie records from a channel-only M3U.
+
+## If token-based login needs investigation
+
+Keep this as a separate hypothesis. Do not silently replace GET with POST, send
+credentials to a newly found host, copy third-party client identifiers/secrets,
+spoof Startup Show, acquire another app's tokens, disable TLS validation, or
+bypass authentication/DRM. Before implementation, establish the intended server
+and normal authorized login contract for this account, then implement a mock
+adapter and a safe user-side verification step. Public code is useful evidence
+but does not establish a current, supported provider API.
+
+## Project checkpoint
+
+No runtime source, provider policy, UI or TV package changed for this research
+checkpoint. The last application commit remains a158af8, with 88 unit tests and
+23 browser tests last reported passing. Tests were not rerun for this document.
+No third-party code or binaries were copied into the application. A new install
+is not required for the diagnostic test above.

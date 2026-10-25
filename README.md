@@ -403,3 +403,10 @@ the provider source gate remains active. Tests include infolink origin retention
 encoded credentials, unknown-host rejection, HTML/auth/redirect safety and Import
 playlist routing. Latest validation: 88 unit tests and 23 browser tests, plus
 syntax and structural checks. The correction still requires a rebuilt TV app.
+
+## Provider investigation checkpoint
+
+[PROVIDER-RESEARCH.md](PROVIDER-RESEARCH.md) records the user-observed E01/direct
+access behavior, pinned public community sources, the limits of that evidence,
+and one candidate test on the user's existing provider host. No new runtime
+adapter or authenticated provider request was introduced by this research.
