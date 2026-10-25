@@ -242,3 +242,18 @@ A full helper run with a local fake adb executable and synthetic secret-bearing
 log lines also produced the expected safe summary. No actual ADB device was
 contacted in cloud tests. Windows/device execution remains pending. No Samsung
 runtime source, signing profile or installed TV package changed.
+
+## User-supplied APK inspection checkpoint
+
+The user provided a 2.6.2 base APK matching package tv.startupshow.android and
+versionCode 127. [STARTUPSHOW-APK-FINDINGS.md](STARTUPSHOW-APK-FINDINGS.md) records
+static evidence for provider-domain discovery, JSON login and token-based API
+routing, with limitations from obfuscated/decompilation-failed methods.
+
+A new same-link discovery helper uses TizenShow's own package_name identity and
+returns metadata only. It does not imitate Startup Show, copy signing material,
+automatically follow a returned host or change the app's trusted origins. This
+is a more specific hypothesis than direct GET or guessed same-host login, but
+has not been tested with the real account. 21 offline discovery cases and all
+44 existing redaction/summary tests pass. No APK/code/secrets were published and
+no runtime UI source changed.

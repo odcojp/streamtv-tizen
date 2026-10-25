@@ -3,3 +3,5 @@
 node_modules/
 *.p12
 *.pfx
+*.apk
+*.xapk

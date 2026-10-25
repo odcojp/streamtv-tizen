@@ -421,3 +421,13 @@ setup, privacy limits and the possibility that a release app logs no HTTP detail
 Run offline summarizer checks with
 `pwsh -NoProfile -File tests/startupshow-diagnostic.Tests.ps1`.
 This does not decrypt HTTPS or modify the Samsung app.
+
+### Static APK findings and provider discovery diagnostic
+
+[STARTUPSHOW-APK-FINDINGS.md](STARTUPSHOW-APK-FINDINGS.md) records the source-based
+connection lead from the user-supplied Startup Show 2.6.2 APK. The standalone
+`scripts/Test-ProviderDiscovery.ps1` tests a same-link domain-discovery request
+using TizenShow's own identity, then stops without contacting the returned host.
+This is not a verified provider integration. Run its 21 offline cases with
+`pwsh -NoProfile -File tests/provider-discovery.Tests.ps1`. No TV app rebuild is
+needed to run the Windows diagnostic.
