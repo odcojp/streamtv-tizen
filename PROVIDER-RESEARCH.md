@@ -198,3 +198,47 @@ output, malformed bodies, missing context and HTML title/marker cases. A
 same-length-secret-variant deduplication bug found in offline development was
 fixed before publication. No authenticated request was performed by this agent.
 TV source and package remain unchanged.
+
+## Read-only Google TV ADB investigation
+
+The user has an authorized ADB connection to their own Google TV. Package lookup
+identified `tv.startupshow.android`; user-reported package metadata is
+versionName 2.6.2, versionCode 127, minSdk 24 and targetSdk 35. The reported flags
+do not include DEBUGGABLE. Process ID was 25220 at that checkpoint; process IDs
+are temporary and must not be hardcoded for future captures. Android SDK numbers
+are not evidence of the Samsung TV's Tizen version.
+
+`scripts/Read-StartupShowDiagnostics.ps1` uses the user's installed ADB locally.
+It requires exactly one authorized connected device, resolves the current main
+package PID, and reads only that PID's logcat output for up to 45 seconds using
+`-T 1` without clearing device logs. Raw lines and stderr are neither displayed
+nor written to disk. Output is restricted to line count, normalized server-domain
+suffixes (with only fixed public service prefixes retained), HTTP status codes
+and fixed keyword/event labels. IP literals and opaque long root-host labels
+are withheld. Userinfo, paths, queries, fragments, body values and arbitrary
+subdomain labels are never output. Review domain summaries locally before
+sharing; this heuristic is not a universal personal-data detector or a full
+public-suffix implementation.
+
+The helper does not root the TV, read private app data, pull/decompile APKs,
+change app/device settings, force-stop apps, clear logs or intercept/decrypt TLS.
+Stopping its capture terminates only its own PC-side logcat process. A check at
+the end flags a changed/missing app PID. Multiple devices, an absent app process,
+unsupported identifiers and premature logcat failure return fixed diagnostics.
+A release app may not emit network details at all; no ADB log output is evidence
+of an invisible HTTPS payload. Keyword labels are hints, not proof that the
+observed URL is an authentication endpoint or that a key is required.
+
+User-side capture: prepare Startup Show's normal login screen with the working
+link entered, but do not select Continue yet. Paste/run the reviewed helper on
+the connected PC. At CAPTURE_STARTED, select Continue on the TV and allow the
+45-second capture to finish. Share only reviewed summary lines, never raw logs.
+If login changes the process or produces no network metadata, report that limit;
+do not escalate to root/TLS bypass or collect unrelated app/device data.
+
+Validation: 14 standalone PowerShell parsing/privacy cases pass via
+`tests/startupshow-diagnostic.Tests.ps1`, extracting only the pure summarizer.
+A full helper run with a local fake adb executable and synthetic secret-bearing
+log lines also produced the expected safe summary. No actual ADB device was
+contacted in cloud tests. Windows/device execution remains pending. No Samsung
+runtime source, signing profile or installed TV package changed.

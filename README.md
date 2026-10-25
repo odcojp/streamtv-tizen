@@ -410,3 +410,14 @@ syntax and structural checks. The correction still requires a rebuilt TV app.
 access behavior, pinned public community sources, the limits of that evidence,
 and one candidate test on the user's existing provider host. No new runtime
 adapter or authenticated provider request was introduced by this research.
+
+### Local Google TV ADB metadata capture
+
+`scripts/Read-StartupShowDiagnostics.ps1` provides a read-only, 45-second,
+app-PID-filtered capture for the user's Google TV. It uses locally installed ADB
+and outputs reviewed server-domain suffixes/status codes/fixed event labels,
+never raw log lines or credential-bearing paths. See PROVIDER-RESEARCH.md for
+setup, privacy limits and the possibility that a release app logs no HTTP details.
+Run offline summarizer checks with
+`pwsh -NoProfile -File tests/startupshow-diagnostic.Tests.ps1`.
+This does not decrypt HTTPS or modify the Samsung app.
