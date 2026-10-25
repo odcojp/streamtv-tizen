@@ -138,3 +138,13 @@ or screenshots from the user, excluding private credentials, and check for an
 explicit server address, login protocol and supported-player instructions before
 implementing or testing another connection method. Do not infer Xtream support
 solely from the page title or IPTV Smarters name.
+
+
+## Provider M3U documentation supersedes a mandatory token-flow assumption
+
+The subsequently supplied Premium Club Smarters instructions explicitly describe
+the base laon.live login link as an M3U URL for a supported Android third-party
+player. The presence of a token flow in Startup Show therefore must not be used
+to claim that all third-party access requires that flow. No working API contract
+was established by the speculative JSON test, which is now retired as well.
+Continue with the documented M3U/native-player comparison in PROVIDER-RESEARCH.md.

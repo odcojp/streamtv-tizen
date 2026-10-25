@@ -1,5 +1,11 @@
 # Apollo / Startup Show connection investigation
 
+**Current direction:** The user supplied Premium Club's IPTV Smarters setup text,
+which explicitly documents the laon.live base link as an Android M3U URL. Follow
+that documented playlist route. The guessed JSON-login and incorrectly targeted
+discovery diagnostics are retired and make no requests. Historical experiments
+below are not current instructions.
+
 Research checkpoint: 2026-10-24 (user's America/New_York date). This records
 observations and candidate tests; it is not a claim that an Apollo API or schema
 has been verified for the user's account.
@@ -273,3 +279,53 @@ This environment's retrieval attempt returned proxy HTTP 403, so its instruction
 are still unknown. A pasted public setup section could supply the actual server
 and supported login protocol. No protocol is inferred from the URL/app name.
 See STARTUPSHOW-APK-FINDINGS.md for the corrected evidence chain and limits.
+
+
+## Provider guide supplied as text: documented Android M3U setup
+
+Source supplied by the user: https://premiumclub.me/iptvsmarters. This environment
+could not retrieve the live page (HTTP proxy 403); findings rely on the user's
+pasted page content. Its age/current account applicability is not independently
+verified.
+
+The supplied instructions explicitly state:
+
+- Use the Android IPTV Smarters version that exposes Load Your Playlist Or
+  File/URL; a version showing only Enter Your Login Details is incompatible with
+  this setup. The guide says its iOS version did not work when written.
+- Select M3U URL and supply exactly the user's HTTPS laon.live `/api/list/`
+  username/password link. No suffix, replacement domain or Xtream action is
+  documented in this passage.
+- The described feed includes channels and recent VOD. The guide describes
+  LiveTV/Movies/Series navigation followed by Explore ALL, but does not define
+  an API schema or tell us how each record is typed.
+- The guide warns that this Smarters setup lacks working EPG and movie/show
+  posters. Those features are not established by the guide, and must not be
+  fabricated or promised through this feed.
+- TiviMate is recommended for Live TV; Premium Club's app is recommended for an
+  all-in-one experience. The linked TiviMate page has not been read here.
+
+This is positive documentation for third-party Android playlist access, not
+proof that the same account currently works through browser Fetch or a Samsung
+widget. It supersedes treating the bare link as necessarily app-only or assuming
+that a JSON-token integration is required for TizenShow. The earlier static APK
+token flow can coexist with a direct M3U route used by other supported players.
+It does not establish a client allowlist, a required User-Agent, or permission to
+spoof another app. No connection headers, domains or credentials should be
+changed based on such a guess.
+
+Next controlled comparison: on the user's Google TV, add the unchanged working
+laon.live URL as an M3U playlist in provider-recommended TiviMate, or use exactly
+the Android Smarters playlist mode described above if that supported version is
+already available. Report only channel count/general result. Keep full playlist
+text, stream URLs and credentials private. A successful result would establish
+normal third-party Android playlist access for this account and justify comparing
+request/response behavior with TizenShow. Failure would leave freshness/account
+compatibility unresolved; it should not trigger endpoint enumeration.
+
+Test-ProviderLogin.ps1 is now also retired and contains only reusable pure
+summaries plus a retirement notice. It cannot send another guessed login request.
+Test-ProviderDiscovery.ps1 remains retired. Existing 44 offline summary/redaction
+checks still pass. No Samsung runtime source, UI, certificate or installed app
+changed; no rebuild or PowerShell diagnostic is needed for the controlled
+Android-player comparison.

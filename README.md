@@ -422,19 +422,16 @@ Run offline summarizer checks with
 `pwsh -NoProfile -File tests/startupshow-diagnostic.Tests.ps1`.
 This does not decrypt HTTPS or modify the Samsung app.
 
-### Static APK findings and provider discovery diagnostic
+### Static APK findings and current provider guidance
 
-[STARTUPSHOW-APK-FINDINGS.md](STARTUPSHOW-APK-FINDINGS.md) records the source-based
-connection lead from the user-supplied Startup Show 2.6.2 APK. The standalone
-`scripts/Test-ProviderDiscovery.ps1` tests a same-link domain-discovery request
-using TizenShow's own identity, then stops without contacting the returned host.
-This is not a verified provider integration. Run its 21 offline cases with
-`pwsh -NoProfile -File tests/provider-discovery.Tests.ps1`. No TV app rebuild is
-needed to run the Windows diagnostic.
+[STARTUPSHOW-APK-FINDINGS.md](STARTUPSHOW-APK-FINDINGS.md) records the APK research
+and its corrected discovery-URL interpretation. Both speculative live login and
+discovery PowerShell diagnostics are retired; they do not prompt for credentials
+or send requests. Their pure parsers remain for offline tests.
 
-
-**Discovery diagnostic correction:** The same-link discovery test was based on
-an incorrect URL assumption. It is retired and makes no network requests. Deeper
-APK tracing and the pending Premium Club Smarters documentation lead are recorded
-in STARTUPSHOW-APK-FINDINGS.md. Earlier diagnostic instructions are historical;
-no new app build or credential test is currently requested.
+The user supplied Premium Club's IPTV Smarters guide as text. It documents the
+unchanged HTTPS laon.live base link as an **Android M3U URL**, warns that EPG and
+posters are unavailable in that setup, and recommends TiviMate for Live TV. This
+supports investigating the direct M3U route; it does not prove browser/Tizen
+compatibility or define an Xtream/JSON API. See PROVIDER-RESEARCH.md for exact
+findings and the next native Android-player comparison. No new build is needed.

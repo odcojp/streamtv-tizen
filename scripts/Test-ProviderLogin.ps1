@@ -1,10 +1,7 @@
-# Candidate normal JSON login diagnostic, based on an older public community
-# client. /api/login is NOT yet verified for the user's account.
-# Run on your own Windows PC. Known credentials and common token formats are
-# redacted from the selected error message; raw bodies are never printed/saved.
-# One request is sent to /api/login on the supplied confirmed host, without redirects.
-# Pure summary tested offline with PowerShell 7.5.4/Linux. No private network
-# request or Windows-specific runtime test was performed in the cloud.
+# RETIRED LIVE DIAGNOSTIC. The supplied provider guide documents M3U playlist
+# access; guessed same-host JSON login did not establish a working API contract.
+# Pure response/redaction functions remain for offline privacy tests only.
+# This file no longer prompts for credentials or makes network requests.
 
 # Pure summary function: outputs only fixed labels and allowlisted field names.
 function Get-ProviderResponseSummary {
@@ -142,69 +139,5 @@ function Get-RedactedProviderMessage {
     } catch { return 'PROVIDER_MESSAGE_REDACTED: WITHHELD_UNPARSABLE_MESSAGE' }
 }
 
-$secureLink = $null
-$plainLink = $null
-$json = $null
-$body = $null
-$parsed = $null
-$match = $null
-$login = $null
-$content = $null
-$response = $null
-$client = $null
-$handler = $null
-try {
-    Add-Type -AssemblyName System.Net.Http -ErrorAction Stop
-    Write-Output 'Candidate JSON login test on your supplied host; no catalog request follows.'
-    $secureLink = Read-Host 'Paste your complete infolink.me or laon.live login link (input hidden)' -AsSecureString
-    $plainLink = ([System.Net.NetworkCredential]::new('', $secureLink)).Password.Trim()
-    $match = [regex]::Match($plainLink, '^(?i:https://(infolink\.me|laon\.live)(?::443)?)/api/list/([^/?#\\]+)/([^/?#\\]+)/?$')
-    if (-not $match.Success -or $plainLink -match '%(?![0-9A-Fa-f]{2})') {
-        Write-Output 'RESULT: INVALID_LINK_FORMAT. Expected your original HTTPS infolink.me or laon.live login link.'
-        return
-    }
-    $providerHost = $match.Groups[1].Value.ToLowerInvariant()
-    $endpoint = 'https://' + $providerHost + '/api/login'
-    Write-Output ('HOST: ' + $providerHost)
-    $login = @{
-        username = [Uri]::UnescapeDataString($match.Groups[2].Value)
-        password = [Uri]::UnescapeDataString($match.Groups[3].Value)
-    }
-    if (-not $login.username -or -not $login.password -or $login.username -in @('.', '..') -or $login.password -in @('.', '..')) {
-        Write-Output 'RESULT: INVALID_LINK_FORMAT.'
-        return
-    }
-    $json = ConvertTo-Json -InputObject $login -Compress
-    $handler = [System.Net.Http.HttpClientHandler]::new()
-    $handler.AllowAutoRedirect = $false
-    $handler.UseCookies = $false
-    $client = [System.Net.Http.HttpClient]::new($handler)
-    $client.Timeout = [TimeSpan]::FromSeconds(25)
-    $client.MaxResponseContentBufferSize = 1048576
-    $content = [System.Net.Http.StringContent]::new($json, [Text.Encoding]::UTF8, 'application/json')
-    $response = $client.PostAsync($endpoint, $content).GetAwaiter().GetResult()
-    $status = [int]$response.StatusCode
-    Write-Output ('HTTP_STATUS: ' + $status)
-    if ($status -ge 300 -and $status -lt 400) {
-        Get-ProviderResponseSummary -Status $status -Text ''
-    } else {
-        $body = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-        $summaryLines = @(Get-ProviderResponseSummary -Status $status -Text $body)
-        $summaryLines
-        if ($summaryLines -notcontains 'RESULT: TOKEN_SHAPED_JSON_RECEIVED.') {
-            Get-RedactedProviderMessage -Text $body -Username $login.username -Password $login.password
-        }
-    }
-} catch {
-    # Do not echo exceptions: a request or response can contain private data.
-    Write-Output 'RESULT: REQUEST_FAILED. Possible network, TLS, timeout or response-size failure.'
-} finally {
-    if ($null -ne $response) { $response.Dispose() }
-    if ($null -ne $content) { $content.Dispose() }
-    if ($null -ne $client) { $client.Dispose() }
-    if ($null -ne $handler) { $handler.Dispose() }
-    if ($null -ne $secureLink) { $secureLink.Dispose() }
-    $secureLink = $null; $plainLink = $null; $json = $null
-    $body = $null; $parsed = $null; $match = $null; $login = $null
-    Write-Output 'Review PROVIDER_MESSAGE_REDACTED or PAGE_TITLE_REDACTED for other private details before sharing. Do not share raw response text.'
-}
+Write-Output 'RESULT: JSON_LOGIN_DIAGNOSTIC_RETIRED_UNVERIFIED_CONTRACT'
+Write-Output 'No request sent. Follow the provider-documented M3U playlist setup.'
