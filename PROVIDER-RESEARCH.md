@@ -161,3 +161,40 @@ pwsh -NoProfile -File tests/provider-diagnostic.Tests.ps1
 The earlier statement that PowerShell was unavailable applies to the previous
 checkpoint; the temporary test runtime does not modify the application's SDK or
 require the user to install PowerShell 7.
+
+
+## Unclassified infolink response; user prefers laon.live
+
+The updated helper returned the following user-reported infolink.me summary:
+HTTP 400, JSON, root fields message and success, no recognized validation fields
+and unclassified message category. That establishes the response shape only,
+not its reason. The user then identified laon.live as the preferred/correct login
+host because its diagnostic did not produce the same HTTP error. Preserve this
+host preference; the earlier HTTP 200 HTML result is still not a verified JSON
+login success.
+
+The helper can now redact a root JSON message or bounded HTML title locally,
+including for HTTP 200 HTML. Raw bodies and nested objects are never displayed.
+It removes known username/password forms (raw, normalized Unicode, URL-encoded,
+form-encoded, double-encoded and base64 forms), whole URLs, bare credential API
+paths, common token key/value pairs, JWT shapes, GUIDs, emails and long opaque
+values before truncating the selected detail. Redaction is not a guarantee that
+every unknown personal detail is removed: the user must review the line locally
+before sharing it. Unsupported messages or missing credential context fail
+closed. This is diagnostic text, not an instruction to follow or a verified API
+contract.
+
+HTML metadata is restricted to fixed marker labels such as SCRIPT_TAG_PRESENT,
+APP_CONTAINER_PRESENT, PASSWORD_FIELD_PRESENT, CHALLENGE_TEXT_PRESENT,
+E01_TEXT_PRESENT or META_REFRESH_PRESENT. Markers are hints, not proof of a WAF,
+app requirement or rejected credentials. No HTML scripts/redirects are executed.
+No request headers, authentication payload, host routing or endpoints changed.
+The next preferred host for a user-side check is the user's working laon.live
+link; share only reviewed safe summary/title/message lines, not raw JSON/HTML.
+
+Validation: 44 offline PowerShell synthetic tests pass. They include 18 original
+summary/status cases plus selected-message credential/token redaction, bounded
+output, malformed bodies, missing context and HTML title/marker cases. A
+same-length-secret-variant deduplication bug found in offline development was
+fixed before publication. No authenticated request was performed by this agent.
+TV source and package remain unchanged.

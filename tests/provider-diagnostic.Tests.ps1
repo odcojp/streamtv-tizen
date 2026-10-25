@@ -7,6 +7,9 @@ if ($parseErrors.Count) { throw 'Diagnostic PowerShell syntax check failed.' }
 $summary = $ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-ProviderResponseSummary' }, $true)
 if ($null -eq $summary) { throw 'Pure summary function not found.' }
 . ([scriptblock]::Create($summary.Extent.Text))
+$redactor = $ast.Find({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-RedactedProviderMessage' }, $true)
+if ($null -eq $redactor) { throw 'Message redactor function not found.' }
+. ([scriptblock]::Create($redactor.Extent.Text))
 
 $cases = @(
     @{Status=400; Text='{"message":"email is required; mock-secret","errors":{"email":["private mock-secret"],"password":["mock-secret"],"mock-secret-field":["ignored"]}}'; Expected=@('BODY_FORMAT: JSON','JSON_FIELDS: errors, message','VALIDATION_FIELDS: password, email','MESSAGE_CATEGORY: MISSING_INPUT_INDICATED','RESULT: HTTP_ERROR.')},
@@ -39,4 +42,57 @@ foreach ($case in $cases) {
     if ($case.Status -ge 300 -and $lines -contains 'RESULT: TOKEN_SHAPED_JSON_RECEIVED.') { throw 'An error was mistaken for login success.' }
     $passed++
 }
+
+
+# Redactor tests preserve useful plain wording while excluding private payloads.
+$username = 'mock-user@example.org'; $password = 'mock-secret/%! &?'
+$variants = @($username, $password, [Uri]::EscapeDataString($username), [Uri]::EscapeDataString($password),
+    [Uri]::EscapeDataString([Uri]::EscapeDataString($password)), [Net.WebUtility]::UrlEncode($password),
+    [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($username + ':' + $password)))
+foreach ($secret in $variants) {
+    $jsonMessage = ConvertTo-Json -InputObject @{message=('Unsupported login request: ' + $secret)} -Compress
+    $output = Get-RedactedProviderMessage -Text $jsonMessage -Username $username -Password $password
+    if (-not $output.Contains('Unsupported login request:') -or $output.Contains($secret) -or $output.Contains('mock-secret') -or $output.Contains($username)) { throw 'Credential redaction failed in a synthetic case.' }
+    $passed++
+}
+foreach ($message in @(
+    'Unsupported login request: https://infolink.me/api/list/mock-user/mock-secret',
+    'Unsupported login request: /api/list/mock-user/mock-secret',
+    'Unsupported login request: token=shortHiddenValue',
+    'Unsupported login request: api_key="shortHiddenValue"',
+    'Unsupported login request: abcdefghijk.abcdefghijk.abcdefghijk',
+    'Unsupported login request: someone@private.example',
+    'Unsupported login request: 12345678-abcd-abcd-abcd-123456789abc',
+    'Unsupported login request: aVeryLongPrivateIdentifier01234567890'
+)) {
+    $jsonMessage = ConvertTo-Json -InputObject @{message=$message} -Compress
+    $output = Get-RedactedProviderMessage -Text $jsonMessage -Username $username -Password $password
+    if (-not $output.Contains('Unsupported login request:') -or $output -match 'https?://|mock-secret|shortHiddenValue|abcdefghijk|someone@|12345678-abcd|aVeryLongPrivate') { throw 'Response-private-data redaction failed in a synthetic case.' }
+    $passed++
+}
+foreach ($message in @('', 'null', '[]', '{"message":{"password":"mock-secret"}}', '<html>mock-secret</html>')) {
+    $output = Get-RedactedProviderMessage -Text $message -Username $username -Password $password
+    if ($output -match 'mock-secret|<html>|password') { throw 'Unsupported message was exposed.' }
+    $passed++
+}
+$output = Get-RedactedProviderMessage -Text '{"message":"mock-secret"}' -Username '' -Password ''
+if (-not $output.Contains('WITHHELD_WITHOUT_CREDENTIAL_CONTEXT')) { throw 'Missing credential context did not fail closed.' }
+$passed++
+$jsonMessage = ConvertTo-Json -InputObject @{message=(('x ' * 400) + $password)} -Compress
+$output = Get-RedactedProviderMessage -Text $jsonMessage -Username $username -Password $password
+if ($output.Length -gt 660 -or -not $output.Contains('[TRUNCATED]') -or $output.Contains('mock-secret')) { throw 'Message length/redaction order check failed.' }
+$passed++
+
+foreach ($message in @(
+    '<html><title>Website fallback</title><div id="app"></div><script src="private.js"></script></html>',
+    '<html><title>mock-user@example.org mock-secret/%! &amp;?</title></html>',
+    '<html><title>Login token=shortHiddenValue</title><input type="password"></html>'
+)) {
+    $output = Get-RedactedProviderMessage -Text $message -Username $username -Password $password
+    if (-not $output.StartsWith('PAGE_TITLE_REDACTED:') -or $output -match 'mock-secret|mock-user|shortHiddenValue') { throw 'HTML title redaction failed.' }
+    $passed++
+}
+$lines = @(Get-ProviderResponseSummary -Status 200 -Text '<html><title>Website</title><div id="root"></div><script>private</script></html>')
+if ($lines -notcontains 'HTML_MARKERS: SCRIPT_TAG_PRESENT, APP_CONTAINER_PRESENT') { throw 'HTML marker summary failed.' }
+$passed++
 Write-Output ('PASS: ' + $passed + ' offline PowerShell response/privacy tests; 0 network requests.')

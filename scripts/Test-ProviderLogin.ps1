@@ -1,6 +1,7 @@
 # Candidate normal JSON login diagnostic, based on an older public community
 # client. /api/login is NOT yet verified for the user's account.
-# Run on your own Windows PC. No private link/password/token is printed or saved.
+# Run on your own Windows PC. Known credentials and common token formats are
+# redacted from the selected error message; raw bodies are never printed/saved.
 # One request is sent to /api/login on the supplied confirmed host, without redirects.
 # Pure summary tested offline with PowerShell 7.5.4/Linux. No private network
 # request or Windows-specific runtime test was performed in the cloud.
@@ -25,6 +26,16 @@ function Get-ProviderResponseSummary {
     }
     $lines = [System.Collections.Generic.List[string]]::new()
     $lines.Add('BODY_FORMAT: ' + $format)
+    if ($format -eq 'HTML') {
+        $markers = [System.Collections.Generic.List[string]]::new()
+        if ($Text -match '(?i)<script\b') { $markers.Add('SCRIPT_TAG_PRESENT') }
+        if ($Text -match '(?i)<app-root\b|id\s*=\s*["''](?:app|root)["'']') { $markers.Add('APP_CONTAINER_PRESENT') }
+        if ($Text -match '(?i)type\s*=\s*["'']password["'']') { $markers.Add('PASSWORD_FIELD_PRESENT') }
+        if ($Text -match '(?i)captcha|cloudflare|challenge-platform') { $markers.Add('CHALLENGE_TEXT_PRESENT') }
+        if ($Text -match '(?i)\bE01\b') { $markers.Add('E01_TEXT_PRESENT') }
+        if ($Text -match '(?i)http-equiv\s*=\s*["'']refresh["'']') { $markers.Add('META_REFRESH_PRESENT') }
+        $lines.Add('HTML_MARKERS: ' + $(if ($markers.Count) { $markers -join ', ' } else { 'NONE_RECOGNIZED' }))
+    }
     $token = $null
     if ($format -eq 'JSON' -and $null -ne $value) {
         $known = @('data', 'error', 'errors', 'message', 'status', 'status_code', 'success', 'code', 'detail', 'title', 'type')
@@ -76,6 +87,61 @@ function Get-ProviderResponseSummary {
     return $lines.ToArray()
 }
 
+
+# Only a root JSON message or bounded HTML title is eligible; bodies remain withheld.
+# Known credentials are mandatory, and redaction happens before truncation.
+function Get-RedactedProviderMessage {
+    param([AllowNull()][AllowEmptyString()][string]$Text,
+          [AllowNull()][AllowEmptyString()][string]$Username,
+          [AllowNull()][AllowEmptyString()][string]$Password)
+    if ([string]::IsNullOrEmpty($Username) -or [string]::IsNullOrEmpty($Password)) {
+        return 'PROVIDER_MESSAGE_REDACTED: WITHHELD_WITHOUT_CREDENTIAL_CONTEXT'
+    }
+    try {
+        $prefix = 'PROVIDER_MESSAGE_REDACTED: '
+        $detail = $null
+        try {
+            $value = ConvertFrom-Json -InputObject $Text -ErrorAction Stop
+            if ($null -eq $value) { return $prefix + 'NO_TEXT_MESSAGE' }
+            $property = $value.PSObject.Properties['message']
+            if ($null -eq $property -or $property.Value -isnot [string]) { return $prefix + 'NO_TEXT_MESSAGE' }
+            $detail = $property.Value
+        } catch {
+            $titleMatch = [regex]::Match($Text, '(?is)<title\b[^>]*>(.{0,4096}?)</title>')
+            if (-not $titleMatch.Success) { return $prefix + 'NO_TEXT_MESSAGE' }
+            $detail = $titleMatch.Groups[1].Value
+            $prefix = 'PAGE_TITLE_REDACTED: '
+        }
+        $textMessage = [Net.WebUtility]::HtmlDecode($detail).Replace('\/', '/')
+        $textMessage = [regex]::Replace($textMessage, '(?i)https?://[^\s<>"'']+', '[REDACTED URL]')
+        $textMessage = [regex]::Replace($textMessage, '(?i)/api/(?:list|login)/[^\s<>"'']+', '/api/[REDACTED]')
+        $textMessage = [regex]::Replace($textMessage, '(?i)\b(access[_ -]?token|refresh[_ -]?token|token|api[_ -]?key|client[_ -]?secret|session[_ -]?id)\b\s*[:=]\s*["'']?[^ \t\r\n,;"'']+', '$1=[REDACTED]')
+        $textMessage = [regex]::Replace($textMessage, '\b[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b', '[REDACTED TOKEN]')
+        $textMessage = [regex]::Replace($textMessage, '(?i)\b[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\b', '[REDACTED ID]')
+        $secrets = [System.Collections.Generic.List[string]]::new()
+        foreach ($secret in @($Username, $Password, ($Username + ':' + $Password))) {
+            foreach ($form in @($secret, $secret.Normalize([Text.NormalizationForm]::FormC), $secret.Normalize([Text.NormalizationForm]::FormD))) {
+                $secrets.Add($form)
+                $encoded = [Uri]::EscapeDataString($form)
+                $secrets.Add($encoded); $secrets.Add([Uri]::EscapeDataString($encoded))
+                $secrets.Add([Net.WebUtility]::UrlEncode($form))
+                $base64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($form))
+                $secrets.Add($base64); $secrets.Add($base64.TrimEnd('=').Replace('+','-').Replace('/','_'))
+            }
+        }
+        foreach ($secret in ($secrets | Select-Object -Unique | Sort-Object Length -Descending)) {
+            if ($secret.Length) { $textMessage = [regex]::Replace($textMessage, [regex]::Escape($secret), '[REDACTED]', [Text.RegularExpressions.RegexOptions]::IgnoreCase) }
+        }
+        $textMessage = [regex]::Replace($textMessage, '(?i)[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}', '[REDACTED EMAIL]')
+        $textMessage = [regex]::Replace($textMessage, '\b[A-Za-z0-9_+/=-]{24,}\b', '[REDACTED VALUE]')
+        $textMessage = [regex]::Replace($textMessage, '[\x00-\x1f\x7f-\x9f]', ' ')
+        $textMessage = [regex]::Replace($textMessage, '\s+', ' ').Trim()
+        if ($textMessage.Length -gt 600) { $textMessage = $textMessage.Substring(0,600) + ' [TRUNCATED]' }
+        if (-not $textMessage.Length) { $textMessage = 'EMPTY_TEXT_MESSAGE' }
+        return $prefix + $textMessage
+    } catch { return 'PROVIDER_MESSAGE_REDACTED: WITHHELD_UNPARSABLE_MESSAGE' }
+}
+
 $secureLink = $null
 $plainLink = $null
 $json = $null
@@ -123,7 +189,11 @@ try {
         Get-ProviderResponseSummary -Status $status -Text ''
     } else {
         $body = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-        Get-ProviderResponseSummary -Status $status -Text $body
+        $summaryLines = @(Get-ProviderResponseSummary -Status $status -Text $body)
+        $summaryLines
+        if ($summaryLines -notcontains 'RESULT: TOKEN_SHAPED_JSON_RECEIVED.') {
+            Get-RedactedProviderMessage -Text $body -Username $login.username -Password $login.password
+        }
     }
 } catch {
     # Do not echo exceptions: a request or response can contain private data.
@@ -136,5 +206,5 @@ try {
     if ($null -ne $secureLink) { $secureLink.Dispose() }
     $secureLink = $null; $plainLink = $null; $json = $null
     $body = $null; $parsed = $null; $match = $null; $login = $null
-    Write-Output 'Copy only HOST, HTTP_STATUS, BODY_FORMAT, JSON_FIELDS, VALIDATION_FIELDS, ERROR_CODE, MESSAGE_CATEGORY and RESULT lines.'
+    Write-Output 'Review PROVIDER_MESSAGE_REDACTED or PAGE_TITLE_REDACTED for other private details before sharing. Do not share raw response text.'
 }
