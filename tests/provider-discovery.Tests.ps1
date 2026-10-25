@@ -9,18 +9,15 @@ foreach ($name in @('New-ProviderDiscoveryRequest','Get-ProviderDiscoverySummary
     . ([scriptblock]::Create($fn.Extent.Text))
 }
 $passed=0
-foreach ($hostName in @('laon.live','infolink.me')) {
-    $request=New-ProviderDiscoveryRequest -Link ('https://'+$hostName+'/api/list/mock%2Fuser/mock%252Fsecret')
-    if ($request.Url -ne ('https://'+$hostName+'/api/list/mock%2Fuser/mock%252Fsecret')) { throw 'Host or credential encoding changed.' }
-    $payload=ConvertFrom-Json $request.Json
-    if ($payload.package_name -ne 'StreamDemo.StreamTV' -or @($payload.PSObject.Properties).Count -ne 1) { throw 'Discovery request does not use only the truthful app identity.' }
-    if ($request.Json -match 'startupshow|mock|username|password') { throw 'Unexpected identity/credential data in discovery body.' }
-    $passed++
-}
-foreach ($link in @('https://example.org/api/list/mock/mock','http://laon.live/api/list/mock/mock','https://laon.live/api/list/mock/mock?private=x','https://laon.live/api/list/mock/%2e%2e','https://user:pass@laon.live/api/list/mock/mock','https://laon.live/api/list/mock/mock/extra')) {
+# Both formerly valid and invalid links must now fail closed: the original
+# discovery target assumption was disproven by deeper static caller tracing.
+foreach ($link in @('https://laon.live/api/list/mock/mock-secret','https://infolink.me/api/list/mock/mock-secret',
+    'https://example.org/api/list/mock/mock','http://laon.live/api/list/mock/mock',
+    'https://laon.live/api/list/mock/mock?private=x','https://laon.live/api/list/mock/%2e%2e',
+    'https://user:pass@laon.live/api/list/mock/mock','https://laon.live/api/list/mock/mock/extra')) {
     $rejected=$false
-    try { $null=New-ProviderDiscoveryRequest -Link $link } catch { $rejected=$true }
-    if (-not $rejected) { throw 'Unsupported discovery URL accepted.' }
+    try { $null=New-ProviderDiscoveryRequest -Link $link } catch { $rejected=$_.Exception.Message -eq 'DISCOVERY_DIAGNOSTIC_RETIRED_WRONG_ENDPOINT_ASSUMPTION' }
+    if (-not $rejected) { throw 'Retired discovery request builder did not fail closed.' }
     $passed++
 }
 $cases=@(
@@ -45,4 +42,4 @@ foreach ($case in $cases) {
     if (($lines -join ' ') -match 'mock-secret|account-private|https?://|/api/') { throw 'Private discovery data leaked.' }
     $passed++
 }
-Write-Output ('PASS: '+$passed+' offline discovery request/response tests; 0 provider requests.')
+Write-Output ('PASS: '+$passed+' offline discovery retirement/response tests; 0 provider requests.')

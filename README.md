@@ -431,3 +431,10 @@ using TizenShow's own identity, then stops without contacting the returned host.
 This is not a verified provider integration. Run its 21 offline cases with
 `pwsh -NoProfile -File tests/provider-discovery.Tests.ps1`. No TV app rebuild is
 needed to run the Windows diagnostic.
+
+
+**Discovery diagnostic correction:** The same-link discovery test was based on
+an incorrect URL assumption. It is retired and makes no network requests. Deeper
+APK tracing and the pending Premium Club Smarters documentation lead are recorded
+in STARTUPSHOW-APK-FINDINGS.md. Earlier diagnostic instructions are historical;
+no new app build or credential test is currently requested.

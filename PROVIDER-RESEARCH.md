@@ -257,3 +257,19 @@ is a more specific hypothesis than direct GET or guessed same-host login, but
 has not been tested with the real account. 21 offline discovery cases and all
 44 existing redaction/summary tests pass. No APK/code/secrets were published and
 no runtime UI source changed.
+
+
+## Discovery diagnostic retired after corrected caller tracing
+
+The laon.live discovery test returned HTTP 200 HTML with page title laon.live.
+Subsequent targeted APK caller analysis shows the discovery URL is supplied from
+separate app configuration rather than the entered credential-bearing link.
+The initial same-link discovery assumption was wrong; earlier instructions are
+superseded. Test-ProviderDiscovery.ps1 now fails closed and makes no requests.
+Its 21 offline retirement/response cases pass. The Samsung runtime is unchanged.
+
+The user supplied https://premiumclub.me/iptvsmarters as a potential setup guide.
+This environment's retrieval attempt returned proxy HTTP 403, so its instructions
+are still unknown. A pasted public setup section could supply the actual server
+and supported login protocol. No protocol is inferred from the URL/app name.
+See STARTUPSHOW-APK-FINDINGS.md for the corrected evidence chain and limits.

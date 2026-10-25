@@ -1,8 +1,7 @@
-# Same-host provider-domain discovery diagnostic, based on static references in
-# the user-supplied Startup Show 2.6.2 APK. Not verified on a live account.
-# Uses TizenShow identity only. Never copies Startup Show identifiers/signatures.
-# Sends one POST to the supplied confirmed login URL; never follows redirects
-# or contacts a returned host. Credentials remain in memory on the user's PC.
+# RETIRED DIAGNOSTIC -- DO NOT USE FOR LIVE CONNECTION TESTS.
+# The original request builder assumed the wrong discovery destination.
+# Retained pure response/redaction helpers support historical offline tests only.
+# This file no longer prompts for credentials or makes network requests.
 
 # Pure summary function: outputs only fixed labels and allowlisted field names.
 function Get-ProviderResponseSummary {
@@ -143,20 +142,7 @@ function Get-RedactedProviderMessage {
 # Uses TizenShow's own identity; never presents itself as Startup Show.
 function New-ProviderDiscoveryRequest {
     param([string]$Link)
-    $value = $Link.Trim()
-    $parts = [regex]::Match($value, '^(?i:https://(infolink\.me|laon\.live)(?::443)?)/api/list/([^/?#\\]+)/([^/?#\\]+)/?$')
-    if (-not $parts.Success -or $value -match '%(?![0-9A-Fa-f]{2})') { throw 'INVALID_LINK_FORMAT' }
-    $username = [Uri]::UnescapeDataString($parts.Groups[2].Value)
-    $password = [Uri]::UnescapeDataString($parts.Groups[3].Value)
-    if (-not $username -or -not $password -or $username -in @('.', '..') -or $password -in @('.', '..')) { throw 'INVALID_LINK_FORMAT' }
-    $hostName = $parts.Groups[1].Value.ToLowerInvariant()
-    return [pscustomobject]@{
-        HostName = $hostName
-        Url = 'https://' + $hostName + '/api/list/' + [Uri]::EscapeDataString($username) + '/' + [Uri]::EscapeDataString($password)
-        Json = ConvertTo-Json -InputObject @{package_name='StreamDemo.StreamTV'} -Compress
-        Username = $username
-        Password = $password
-    }
+    throw 'DISCOVERY_DIAGNOSTIC_RETIRED_WRONG_ENDPOINT_ASSUMPTION'
 }
 
 function Get-ProviderDiscoverySummary {
@@ -189,41 +175,7 @@ function Get-ProviderDiscoverySummary {
     return @(('CANDIDATE_DOMAIN_METADATA: ' + $root), 'RESULT: DOMAIN_CANDIDATE_RECEIVED_NOT_CONTACTED')
 }
 
-$secureLink = $null; $plainLink = $null; $request = $null; $body = $null
-$handler = $null; $client = $null; $response = $null; $content = $null
-try {
-    Add-Type -AssemblyName System.Net.Http -ErrorAction Stop
-    Write-Output 'MODE: DOMAIN_DISCOVERY. Uses TizenShow identity; no login request to another server follows.'
-    $secureLink = Read-Host 'Paste your working laon.live or infolink.me login link (input hidden)' -AsSecureString
-    $plainLink = ([Net.NetworkCredential]::new('', $secureLink)).Password
-    $request = New-ProviderDiscoveryRequest -Link $plainLink
-    Write-Output ('HOST: ' + $request.HostName)
-    Write-Output 'CLIENT_IDENTITY: StreamDemo.StreamTV'
-    $handler = [Net.Http.HttpClientHandler]::new()
-    $handler.AllowAutoRedirect = $false; $handler.UseCookies = $false
-    $client = [Net.Http.HttpClient]::new($handler)
-    $client.Timeout = [TimeSpan]::FromSeconds(25); $client.MaxResponseContentBufferSize = 1048576
-    $client.DefaultRequestHeaders.Accept.Add([Net.Http.Headers.MediaTypeWithQualityHeaderValue]::new('application/json'))
-    $content = [Net.Http.StringContent]::new($request.Json, [Text.Encoding]::UTF8, 'application/json')
-    $response = $client.PostAsync($request.Url, $content).GetAwaiter().GetResult()
-    $status = [int]$response.StatusCode
-    Write-Output ('HTTP_STATUS: ' + $status)
-    if ($status -ge 300 -and $status -lt 400) {
-        Write-Output 'RESULT: DISCOVERY_REDIRECT_BLOCKED'
-    } else {
-        $body = $response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-        Get-ProviderResponseSummary -Status $status -Text $body | Where-Object { -not $_.StartsWith('RESULT:') }
-        Get-ProviderDiscoverySummary -Status $status -Text $body -Username $request.Username -Password $request.Password
-        Get-RedactedProviderMessage -Text $body -Username $request.Username -Password $request.Password
-    }
-} catch {
-    Write-Output 'RESULT: DISCOVERY_TEST_FAILED. Check link format, network, TLS, timeout or response size.'
-} finally {
-    if ($null -ne $response) { $response.Dispose() }
-    if ($null -ne $content) { $content.Dispose() }
-    if ($null -ne $client) { $client.Dispose() }
-    if ($null -ne $handler) { $handler.Dispose() }
-    if ($null -ne $secureLink) { $secureLink.Dispose() }
-    $secureLink=$null; $plainLink=$null; $request=$null; $body=$null
-    Write-Output 'Review candidate domain metadata and redacted messages privately before sharing. Never share your link or raw response.'
-}
+# Retired: deeper APK caller tracing showed the URL came from app configuration,
+# not the user login link. Do not prompt for or send any credentials here.
+Write-Output 'RESULT: DISCOVERY_DIAGNOSTIC_RETIRED_WRONG_ENDPOINT_ASSUMPTION'
+Write-Output 'No request sent. Use current provider setup instructions to establish a supported connection method.'

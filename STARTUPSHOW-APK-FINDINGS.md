@@ -1,5 +1,11 @@
 # Startup Show 2.6.2 base APK: static compatibility findings
 
+**Correction:** The first discovery diagnostic assumed that the dynamic discovery
+URL was the user's login link. Deeper caller tracing shows separately supplied
+app-configuration endpoints. That diagnostic is retired and makes no requests.
+See the final correction section; the initial test instructions below are a
+historical record, not current instructions.
+
 ## Input and method
 
 The user provided a base APK after a read-only ADB copy from their Google TV.
@@ -94,3 +100,41 @@ credential-bearing request to a different host.
 User action: review the discovery script, copy its raw contents into the existing
 Windows PowerShell terminal, use the working laon.live link, and report only the
 reviewed summary. Keep the private link and any raw JSON/HTML on the user's PC.
+
+
+## Correction after the real discovery test
+
+The user ran the initial helper against laon.live and received HTTP 200 HTML,
+a script-tag marker, and page title laon.live. No domain was resolved. This does
+not establish bad credentials or denial of a TizenShow registration.
+
+A deeper read of previously failed/decompiled coroutine methods changes the URL
+interpretation. DEX constructor references identify io.nitrix.core.utils.g as
+calling the discovery/login coroutine objects. Targeted simple-mode output then
+shows its discovery branch receives the two configuration strings carried by
+H9.r (and the G login-context object). Dependency injection Cc.k obtains those
+strings through F9.a/F9.b, which supply separate fixed short-link service
+references. They are not copied from the username/password login link. Another
+branch can use an explicitly supplied/selected backend host. The exact current
+configuration and runtime branch remain unverified.
+
+Thus the existence of DomainApi, package_name and result was correctly observed,
+but mapping its dynamic URL to the user-supplied login URL was an unsupported
+assumption. The original diagnostic cannot validate the real discovery flow.
+It is retired: its builder always rejects, and its top-level code only reports
+retirement without prompting for credentials or opening a network connection.
+The existing source-model response summaries are retained for offline tests.
+
+No app identities, request signatures, private app data or embedded secrets were
+used to obtain a different server. The app resources also contain an old public
+GitHub configuration-file reference; unauthenticated retrieval returned 404.
+Unauthenticated fetches of the separate service references and the newly supplied
+Premium Club IPTV Smarters guide were blocked by this environment's HTTP proxy
+with 403. No credential-bearing request was made by this agent.
+
+The user-provided https://premiumclub.me/iptvsmarters guide is a new documentation
+lead. Its contents have not been read or verified. Obtain the public setup text
+or screenshots from the user, excluding private credentials, and check for an
+explicit server address, login protocol and supported-player instructions before
+implementing or testing another connection method. Do not infer Xtream support
+solely from the page title or IPTV Smarters name.
