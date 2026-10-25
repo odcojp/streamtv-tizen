@@ -119,3 +119,45 @@ It reports the non-secret HOST alongside HTTP_STATUS and a fixed RESULT label.
 The earlier single-host diagnostic description above is superseded by this
 host-preserving update. No authenticated diagnostic has been run by this agent;
 PowerShell runtime validation is still outstanding.
+
+
+## User-side JSON-login diagnostic results
+
+The user ran the candidate JSON-login helper on their PC:
+
+- laon.live: HTTP 200 with HTML; no recognized token-shaped JSON.
+- infolink.me: HTTP 400; the first helper deliberately withheld the error body.
+
+HTTP 200 HTML does not establish authentication success. HTTP 400 does not
+establish a valid API route, wrong credentials or a specific missing field. The
+JSON-login contract is still unverified for both origins.
+
+The helper now reads bounded non-redirect error bodies and emits a pure safe
+summary: BODY_FORMAT; an allowlist of recognized JSON field names; recognized
+validation-field names only (never values); an allowlisted error code; a fixed
+message category; and RESULT. Raw response text, arbitrary object keys/messages,
+URLs, passwords and tokens are not output. Redirect destinations remain hidden.
+A token-shaped payload on a non-2xx response is not treated as login success.
+The next user-side check is one run against infolink.me with the updated helper,
+reporting only these summary labels alongside HOST and HTTP_STATUS.
+
+Validation: an official PowerShell 7.5.4 Linux release was downloaded into /tmp
+and its archive SHA256 checked against the release's hashes.sha256. The standalone
+`tests/provider-diagnostic.Tests.ps1` parses the helper and extracts only its pure
+summary function, without invoking the credential prompt or transport. All 18
+synthetic privacy/format/status tests pass. Cases cover validation errors, auth
+codes, unsupported JSON, array/null/bool roots, HTML, malformed text, redirects,
+secret-bearing keys/messages/tokens and misleading token-shaped HTTP errors.
+No network request is made by these tests. Windows-specific execution of this
+updated version remains unverified here; the user successfully ran the previous
+transport on their Windows PC. No TV runtime code changed.
+
+To repeat the offline checks when PowerShell is installed:
+
+```powershell
+pwsh -NoProfile -File tests/provider-diagnostic.Tests.ps1
+```
+
+The earlier statement that PowerShell was unavailable applies to the previous
+checkpoint; the temporary test runtime does not modify the application's SDK or
+require the user to install PowerShell 7.
